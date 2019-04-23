@@ -1,0 +1,8 @@
+{:paths ["src/clj"]
+ :deps {}
+ :aliases {:repl
+           {:extra-deps
+            {cider/cider-nrepl {:mvn/version "0.21.1"}
+             org.clojure/tools.deps.alpha {:mvn/version "0.6.496"}}}}}
+
+
