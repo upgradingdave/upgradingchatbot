@@ -1,4 +1,4 @@
-# Empty clojure project
+# IRC Chatbot for Twitch
 
 To run a main function: 
 

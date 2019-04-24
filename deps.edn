@@ -1,5 +1,9 @@
-{:paths ["src/clj"]
- :deps {}
+{:paths
+ ["src/clj"]
+
+ :deps
+ {org.pircbotx/pircbotx {:mvn/version "2.0.1"}
+  upgrade/encrypt {:mvn/version "0.0.1"}}
  :aliases {:repl
            {:extra-deps
             {cider/cider-nrepl {:mvn/version "0.21.1"}

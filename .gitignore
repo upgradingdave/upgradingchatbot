@@ -1,1 +1,4 @@
 .cpcache/
+.nrepl-port
+logs/
+mykeyfile
