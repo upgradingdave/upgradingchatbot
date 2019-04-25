@@ -2,8 +2,9 @@
  ["src/clj"]
 
  :deps
- {org.pircbotx/pircbotx {:mvn/version "2.0.1"}
+ {org.kitteh.irc/client-lib {:mvn/version "7.1.0"}
   upgrade/encrypt {:mvn/version "0.0.1"}}
+ 
  :aliases {:repl
            {:extra-deps
             {cider/cider-nrepl {:mvn/version "0.21.1"}
