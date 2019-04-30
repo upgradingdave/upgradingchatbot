@@ -1,4 +1,6 @@
-(ns upgrade.core
+(ns upgrade.twitchbot.core
+  (:require [upgrade.twitchbot.freesound :refer [search-and-play-nth players-stop]]
+            [upgrade.twitchbot.common :refer [decrypt]])
   (:import [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
            [org.kitteh.irc.client.library.event.channel
@@ -9,14 +11,7 @@
             ClientReceiveCommandEvent
             ClientReceiveNumericEvent]
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
-           [upgrade.encrypt EncryptionManager]
            ))
-
-(defn encrypt [message]
-  (.. (EncryptionManager.) (encrypt (java.io.File. "./mykeyfile") message)))
-
-(defn decrypt [message]
-  (.. (EncryptionManager.) (decrypt (java.io.File. "./mykeyfile") message)))
 
 (defn get-config []
   {:log-file-path "./twitchbot.log"
@@ -32,8 +27,9 @@
     (spit path-to-file (str msg "\n") :append true)))
 
 (defn handle-event [evt]
-  "Here's the main event handler. This is where we can implement cool features"
+  "Here's the main event handler. This is where we can implement fun stuff"
   (let [conf (get-config)
+        channel (:channel (get-config))
         log-file-path (:log-file-path conf)
         log (partial log log-file-path)
         event-type (type evt)
@@ -42,13 +38,57 @@
         ]
     (cond
 
+      ;; Do stuff when a message was sent to the channel
       (instance? ChannelMessageEvent evt)
       (let [msg (. evt getMessage)
-            server-msg (. (. evt getSource) (getMessage))]
-        (. evt (sendReply (str "Yeah, yeah, I heard you. You said: " msg))))
+            server-msg (. (. evt getSource) (getMessage))
+            [_ command] (re-matches #"^(!\w+).*$" msg)]
+        (cond
+
+          (= command "!help")
+          (do
+            (.sendReply evt "Welcome! The UpgradingChatBot is online. Type !help for a full list of commands. Feel free to play around and have fun! All commands start with an exclamation point (!). For example, try '!play <search-term>' to play a sound.")
+            ;; Either not calling sendMessage with correct params or
+            ;; connection is closed after sendReply?
+            ;; (let [client (.getClient evt)]
+            ;;   (.sendMessage client channel "!play <sound>"))
+            ;; Can't send multiple replies?
+            ;;(.sendReply evt "Try typing: `!play <search>` for some sound effects")
+            )
+
+          (= command "!play")
+          (do 
+            (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\"]+)\"\s+(\d+)$" msg)]
+              (do
+                (println "Number 1")
+                (search-and-play-nth search-term (Integer/parseInt n))))
+
+            (if-let [[_ search-term n] (re-matches #"^!play\s+([^\"]+)\s+(\d+)$" msg)]
+              (do
+                (println "Number 2")
+                (search-and-play-nth search-term (Integer/parseInt n))))
+
+            (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\s]+)\"$" msg)]
+              (do
+                (println "Number 3")
+                (search-and-play-nth search-term 0)))
+
+            (if-let [[_ search-term n] (re-matches #"^!play\s+([^\s]+)$" msg)]
+              (do
+                (println "Number 4")
+                (search-and-play-nth search-term 0))))
+
+          (= command "!stop")
+          (players-stop)
+ 
+          :else
+          (log (str "ChatBot Heard: " msg))
+          
+          ))
       
-      :else
-      (log (str "NEED IMPLEMENTATION FOR: " event-type)))))
+      ;; :else
+      ;; (log (str "NEED IMPLEMENTATION FOR: " event-type))
+      )))
 
 ;; Make a class with methods for handling events
 (defprotocol IrcListeners
