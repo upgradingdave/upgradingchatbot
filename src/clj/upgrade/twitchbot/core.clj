@@ -6,7 +6,8 @@
            [org.kitteh.irc.client.library.event.channel
             ChannelMessageEvent
             ChannelNoticeEvent
-            ChannelJoinEvent]
+            ChannelJoinEvent
+            ChannelPartEvent]
            [org.kitteh.irc.client.library.event.client
             ClientReceiveCommandEvent
             ClientReceiveNumericEvent]
@@ -26,6 +27,59 @@
   (let [conf (get-config)]
     (spit path-to-file (str msg "\n") :append true)))
 
+
+(defn handle-channel-message [evt]
+  (let [conf (get-config)
+        log-file-path (:log-file-path conf)
+        log (partial log log-file-path)
+        msg (. evt getMessage)
+        server-msg (. (. evt getSource) (getMessage))
+        [_ command] (re-matches #"^(!\w+).*$" msg)]
+    (cond
+
+      (= command "!help")
+      (.sendReply evt "Welcome! The UpgradingChatBot is online. Type !help for a full list of commands. Feel free to play around and have fun! All commands start with an exclamation point (!). For example, try '!play <search-term>' to play a sound. You can type !stop if the sound plays too long. ")
+      
+      ;; Either not calling sendMessage with correct params or
+      ;; connection is closed after sendReply?
+      ;; Can't send multiple replies?
+      ;; (.sendReply evt "Try typing: `!play <search>` for some sound effects")
+
+      (= command "!so")
+      (if-let [[_ username] (re-matches #"^!so\s+@(\w+)$" msg)]
+        (do
+          (println "Shout Out to " username)
+          (.sendReply evt (str "Shout out to https://www.twitch.tv/" username " Go and check out their stream!"))))
+      
+      (= command "!play")
+      (do 
+        (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\"]+)\"\s+(\d+)$" msg)]
+          (do
+            (println "Number 1")
+            (search-and-play-nth search-term (Integer/parseInt n))))
+
+        (if-let [[_ search-term n] (re-matches #"^!play\s+([^\"]+)\s+(\d+)$" msg)]
+          (do
+            (println "Number 2")
+            (search-and-play-nth search-term (Integer/parseInt n))))
+
+        (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\s]+)\"$" msg)]
+          (do
+            (println "Number 3")
+            (search-and-play-nth search-term 0))
+        (if-let [[_ search-term n] (re-matches #"^!play\s+([^\s]+)$" msg)]
+          (do
+            (println "Number 4")
+            (search-and-play-nth search-term 0)))))
+
+      (= command "!stop")
+      (players-stop)
+      
+      :else
+      (log (str "ChatBot Heard: " msg))
+
+      )))
+
 (defn handle-event [evt]
   "Here's the main event handler. This is where we can implement fun stuff"
   (let [conf (get-config)
@@ -36,58 +90,34 @@
         ;; Seems like class is same as type
         ;; event-class (class evt)
         ]
+    
     (cond
 
       ;; Do stuff when a message was sent to the channel
       (instance? ChannelMessageEvent evt)
-      (let [msg (. evt getMessage)
-            server-msg (. (. evt getSource) (getMessage))
-            [_ command] (re-matches #"^(!\w+).*$" msg)]
-        (cond
+      (handle-channel-message evt)
 
-          (= command "!help")
-          (do
-            (.sendReply evt "Welcome! The UpgradingChatBot is online. Type !help for a full list of commands. Feel free to play around and have fun! All commands start with an exclamation point (!). For example, try '!play <search-term>' to play a sound.")
-            ;; Either not calling sendMessage with correct params or
-            ;; connection is closed after sendReply?
-            ;; (let [client (.getClient evt)]
-            ;;   (.sendMessage client channel "!play <sound>"))
-            ;; Can't send multiple replies?
-            ;;(.sendReply evt "Try typing: `!play <search>` for some sound effects")
-            )
+      (instance? ChannelJoinEvent evt)
+      (let [username (.getUser evt)
+            nick (.getNick username)
+            client (.getClient evt)]
+        (log (str nick "just joined!!"))
+        ;; This is working. Next step is to use this information about when people join
+        ;; in a fun way
+        ;; (send-message client (str "Welcome, " nick
+        ;;                           ", to the stream! Please introduce "
+        ;;                           "yourself and tell us why you're interested in clojure."))
+        )
 
-          (= command "!play")
-          (do 
-            (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\"]+)\"\s+(\d+)$" msg)]
-              (do
-                (println "Number 1")
-                (search-and-play-nth search-term (Integer/parseInt n))))
+      (instance? ChannelPartEvent evt)
+      (let [username (.getUser evt)
+            nick (.getNick username)
+            client (.getClient evt)]
+        (log (str nick " just left!!")))
 
-            (if-let [[_ search-term n] (re-matches #"^!play\s+([^\"]+)\s+(\d+)$" msg)]
-              (do
-                (println "Number 2")
-                (search-and-play-nth search-term (Integer/parseInt n))))
-
-            (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\s]+)\"$" msg)]
-              (do
-                (println "Number 3")
-                (search-and-play-nth search-term 0)))
-
-            (if-let [[_ search-term n] (re-matches #"^!play\s+([^\s]+)$" msg)]
-              (do
-                (println "Number 4")
-                (search-and-play-nth search-term 0))))
-
-          (= command "!stop")
-          (players-stop)
- 
-          :else
-          (log (str "ChatBot Heard: " msg))
-          
-          ))
+      :else
+      (log (str "NEED IMPLEMENTATION FOR: " event-type))
       
-      ;; :else
-      ;; (log (str "NEED IMPLEMENTATION FOR: " event-type))
       )))
 
 ;; Make a class with methods for handling events

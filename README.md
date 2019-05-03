@@ -14,6 +14,11 @@ To start a repl:
 ./scripts/repl.sh
 ```
 
+# Commands so far
 
-
-
+!help
+!play <search-for-a-sound-on-freesound.org>
+!stop 
+!so <username>
+Detect when someone joins. 
+Detect when someone leaves. 
