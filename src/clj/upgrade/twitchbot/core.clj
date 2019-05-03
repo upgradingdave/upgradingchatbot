@@ -1,5 +1,9 @@
 (ns upgrade.twitchbot.core
-  (:require [upgrade.twitchbot.freesound :refer [search-and-play-nth players-stop]]
+  (:require [instaparse.core :as insta]
+            [upgrade.twitchbot.freesound :refer [search-and-play-nth
+                                                 players-stop
+                                                 fetch-mp3-and-play
+                                                 play-not-found]]
             [upgrade.twitchbot.common :refer [decrypt]])
   (:import [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
@@ -27,58 +31,93 @@
   (let [conf (get-config)]
     (spit path-to-file (str msg "\n") :append true)))
 
+(defn command-parser []
+  (str "cmd = play | stop | help | so\n"
+       "play = <\"!play\"> <space> sound-search\n"
+       "sound-search = first-result-search | nth-result-search | sound-id \n"
+       ;;"first-result-search = #\"[^\\s]+\" | #\"\\\"[^\\\"]+\\\"\" | #\"'[^']+'\"\n"
+       "first-result-search = #\".+\"\n"
+       "nth-result-search = #\"\\d+\" <space> first-result-search\n"
+       "sound-id = #\"\\d+\"\n"
+       "stop = <\"!stop\">\n"
+       "help = <\"!help\">\n"
+       "so = <\"!so\"> <space> username | <\"!so\"> <space> <\"@\">username\n"
+       "username= #\"[^\\s]+\"\n"
+       "space= #\"\\s+\"\n"
+       ))
 
 (defn handle-channel-message [evt]
   (let [conf (get-config)
         log-file-path (:log-file-path conf)
         log (partial log log-file-path)
         msg (. evt getMessage)
-        server-msg (. (. evt getSource) (getMessage))
-        [_ command] (re-matches #"^(!\w+).*$" msg)]
-    (cond
+        ;; server-msg (. (. evt getSource) (getMessage))
+        cmd-parser (insta/parser (command-parser))
+        parse-result (cmd-parser msg)
+        parse-failure? (insta/failure? parse-result)]
 
-      (= command "!help")
-      (.sendReply evt "Welcome! The UpgradingChatBot is online. Type !help for a full list of commands. Feel free to play around and have fun! All commands start with an exclamation point (!). For example, try '!play <search-term>' to play a sound. You can type !stop if the sound plays too long. ")
+    (if parse-failure?
+
+      ;; handle failure
+      (do
+        (log (str "Chatbot heard: " msg))
+        ;;(.sendReply evt (str "I heard ya! But that's not a command: " msg ))
+        )
       
-      ;; Either not calling sendMessage with correct params or
-      ;; connection is closed after sendReply?
-      ;; Can't send multiple replies?
-      ;; (.sendReply evt "Try typing: `!play <search>` for some sound effects")
+      ;; otherwise, do command
+      (let  [[_ [command args]] parse-result] 
+        (cond
 
-      (= command "!so")
-      (if-let [[_ username] (re-matches #"^!so\s+@(\w+)$" msg)]
-        (do
-          (println "Shout Out to " username)
-          (.sendReply evt (str "Shout out to https://www.twitch.tv/" username " Go and check out their stream!"))))
-      
-      (= command "!play")
-      (do 
-        (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\"]+)\"\s+(\d+)$" msg)]
-          (do
-            (println "Number 1")
-            (search-and-play-nth search-term (Integer/parseInt n))))
+          (= command :help)
+          (.sendReply evt (str "Welcome! The UpgradingChatBot is online. "
+                               " Type !help for a full list of commands. "
+                               "Feel free to play around and have fun! "
+                               "All commands start with an exclamation point (!). "
+                               "For example, try '!play <search-term>' to play a sound. "
+                               "You can type !stop if the sound plays too long. "))
+          
+          (= command :so)
+          (if-let [[_ username] args]
+            (do
+              (println "Shout Out to " username)
+              (.sendReply evt (str "Shout out to https://www.twitch.tv/"
+                                   username
+                                   " Go and check out their stream!"))))
 
-        (if-let [[_ search-term n] (re-matches #"^!play\s+([^\"]+)\s+(\d+)$" msg)]
-          (do
-            (println "Number 2")
-            (search-and-play-nth search-term (Integer/parseInt n))))
+          (= command :play)
+          (let [[_ [search-type]] args]
+            (case search-type
 
-        (if-let [[_ search-term n] (re-matches #"^!play\s+\"([^\s]+)\"$" msg)]
-          (do
-            (println "Number 3")
-            (search-and-play-nth search-term 0))
-        (if-let [[_ search-term n] (re-matches #"^!play\s+([^\s]+)$" msg)]
-          (do
-            (println "Number 4")
-            (search-and-play-nth search-term 0)))))
+              :first-result-search
+              (let [[_ [_ search-term]] args
+                    soundid (search-and-play-nth search-term 0)]
+                (log (str "!play first-result-search " search-term " ==> " soundid))
+                (if-not soundid
+                  (play-not-found)))
+              
+              :nth-result-search
+              (let [[_ [_ idx [_ search-term]]] args
+                    soundid (search-and-play-nth search-term (Integer/parseInt idx))]
+                (log (str "!play nth-result-search: " idx ", " search-term " ==> " soundid))
+                (if-not soundid
+                  (play-not-found)))
 
-      (= command "!stop")
-      (players-stop)
-      
-      :else
-      (log (str "ChatBot Heard: " msg))
+              :sound-id
+              (let [[_ [_ soundid]] args
+                    soundid (fetch-mp3-and-play soundid)]
+                (log (str "play! " soundid))
+                (if-not soundid
+                  (play-not-found)))
 
-      )))
+              (play-not-found)))
+
+          (= command :stop)
+          (players-stop)
+          
+          :else
+          (log (str "That's a valid command, but it's not implemented yet:" msg))
+
+          )))))
 
 (defn handle-event [evt]
   "Here's the main event handler. This is where we can implement fun stuff"
@@ -114,6 +153,10 @@
             nick (.getNick username)
             client (.getClient evt)]
         (log (str nick " just left!!")))
+
+      (instance? ClientReceiveCommandEvent evt)
+      (log (str "Received: ClientRecieveCommandEvent"))
+      
 
       :else
       (log (str "NEED IMPLEMENTATION FOR: " event-type))
@@ -156,7 +199,7 @@
 
 (defn leave-and-disconnect [client channel]
   (. client (removeChannel channel "Later alligators"))
-  (. client (shutdown "Upgradingdavebot is shutting down")))
+  (. client (shutdown "UpgradingChatBot is shutting down")))
 
 (comment
 
@@ -167,11 +210,21 @@
   (add-listeners client)
   (. client (connect))
   (. client addChannel (into-array String [channel]))
-  (send-message client "UpgradingBot is ALIVE")
+  (send-message client "UpgradingChatBot is ALIVE")
 
   (leave-and-disconnect client channel)
 
   )
+
+(defn start-chat-bot []
+  (let [conf (get-config)
+        channel (:channel conf)
+        client (create-client conf)]
+
+    (add-listeners client)
+    (. client (connect))
+    (. client addChannel (into-array String [channel]))
+    (send-message client "UpgradingChatBot is ALIVE")))
 
 (defn -main []
   (println "Attempting to start twitch chat bot ... ")

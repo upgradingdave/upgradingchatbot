@@ -4,6 +4,7 @@
  :deps
  {clj-http {:mvn/version "3.9.1"}
   cheshire {:mvn/version "5.8.1"}
+  instaparse {:mvn/version "1.4.10"}
   javazoom/jlayer {:mvn/version "1.0.1"}
   org.kitteh.irc/client-lib {:mvn/version "7.1.0"}
   upgrade/encrypt {:mvn/version "0.0.1"}}

@@ -22,3 +22,17 @@ To start a repl:
 !so <username>
 Detect when someone joins. 
 Detect when someone leaves. 
+
+# !play
+
+!play 2 yay
+!play yo
+!play boom
+!play Mexican Accent Male Adult "Badges? We don't need no stinking badges!" classic cinema houston
+!play doh
+!play sad trombone
+!play dude
+!play 1 dude
+!play timber
+!play jet
+!play 1 underwater

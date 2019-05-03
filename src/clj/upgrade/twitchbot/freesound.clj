@@ -31,7 +31,7 @@
   (first (:results (:body search-response))))
 
 (defn nth-search-result [search-response n]
-  (nth (:results (:body search-response)) n))
+  (nth (:results (:body search-response)) n nil))
 
 (defn sound [sound-id]
   (let [url (str "https://freesound.org/apiv2/sounds/" sound-id "/" "?token=" api-key)
@@ -54,7 +54,8 @@
         player (javazoom.jl.player.Player. bis)
         t (Thread. #(doto player (.play) (.close)))]
     (swap! players conj t)
-    (.start t)))
+    (.start t)
+    t))
 
 (defn play-file [filename & opts]
   (let [fis (java.io.FileInputStream. filename)]
@@ -70,7 +71,8 @@
   (let [stream (fetch-mp3 sound-id)]
     (if (not (nil? stream))
       (let [bis (java.io.ByteArrayInputStream. stream)]
-        (play-input-stream bis)))))
+        (play-input-stream bis)
+        sound-id))))
 
 (defn search-and-save-first [search-term]
   (if-let [sound-id (:id (first-search-result (search search-term)))]
@@ -84,3 +86,5 @@
   (if-let [sound-id (:id (nth-search-result (search search-term) n))]
     (fetch-mp3-and-play sound-id)))
 
+(defn play-not-found []
+  (fetch-mp3-and-play 216090))
