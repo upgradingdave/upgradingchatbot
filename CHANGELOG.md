@@ -1,9 +1,14 @@
 # TODO
 
-- Setup unit tests!
-- reply with freesound link 
+- create documentation and link to it
+- send periodic broadcast messages to let people know how to use chatbot
+- Setup unit tests
 - Dynamically generate help for sounds (maybe !sfx command)
 - Cache sound files from freesound
+
+# 2019-05-04
+
+- reply with freesound link 
 
 # 2019-05-03
 

@@ -1,9 +1,10 @@
 (ns upgrade.twitchbot.core
   (:require [instaparse.core :as insta]
-            [upgrade.twitchbot.freesound :refer [search-and-play-nth
-                                                 players-stop
-                                                 fetch-mp3-and-play
-                                                 play-not-found]]
+            [upgrade.twitchbot.freesound :refer [search-and-play-nth!
+                                                 players-stop!
+                                                 fetch-mp3-and-play!
+                                                 fetch-sound!
+                                                 play-not-found!]]
             [upgrade.twitchbot.common :refer [decrypt]])
   (:import [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
@@ -45,6 +46,9 @@
        "username= #\"[^\\s]+\"\n"
        "space= #\"\\s+\"\n"
        ))
+
+(defn freesound-reply [url]
+  (str "SingsNote SingsNote SingsNote " url))
 
 (defn handle-channel-message [evt]
   (let [conf (get-config)
@@ -90,29 +94,32 @@
 
               :first-result-search
               (let [[_ [_ search-term]] args
-                    soundid (search-and-play-nth search-term 0)]
-                (log (str "!play first-result-search " search-term " ==> " soundid))
-                (if-not soundid
-                  (play-not-found)))
+                    sound-result (search-and-play-nth! search-term 0)]
+                (if-let [sound-id (:id sound-result)]
+                  (.sendReply evt (freesound-reply (:url sound-result)))
+                  ;;(log (str "!play first-result-search " search-term " ==> " sound-id))
+                  (play-not-found!)))
               
               :nth-result-search
               (let [[_ [_ idx [_ search-term]]] args
-                    soundid (search-and-play-nth search-term (Integer/parseInt idx))]
-                (log (str "!play nth-result-search: " idx ", " search-term " ==> " soundid))
-                (if-not soundid
-                  (play-not-found)))
+                    sound-result (search-and-play-nth! search-term (Integer/parseInt idx))]
+                (if-let [sound-id (:id sound-result)]
+                  (.sendReply evt (freesound-reply (:url sound-result)))
+                  ;; (log (str "!play nth-result-search: " idx ", "
+                  ;;           search-term " ==> " sound-id))
+                  (play-not-found!)))
 
               :sound-id
-              (let [[_ [_ soundid]] args
-                    soundid (fetch-mp3-and-play soundid)]
-                (log (str "play! " soundid))
-                (if-not soundid
-                  (play-not-found)))
+              (let [[_ [_ sound-id]] args]
+                (if-let [sound-result (fetch-mp3-and-play! (fetch-sound! sound-id))]
+                  (.sendReply evt (freesound-reply (:url sound-result)))
+                  ;;(log (str "play! " sound-id))
+                  (play-not-found!)))
 
-              (play-not-found)))
+              (play-not-found!)))
 
           (= command :stop)
-          (players-stop)
+          (players-stop!)
           
           :else
           (log (str "That's a valid command, but it's not implemented yet:" msg))
@@ -224,7 +231,8 @@
     (add-listeners client)
     (. client (connect))
     (. client addChannel (into-array String [channel]))
-    (send-message client "UpgradingChatBot is ALIVE")))
+    (send-message client "UpgradingChatBot is ALIVE")
+    client))
 
 (defn -main []
   (println "Attempting to start twitch chat bot ... ")

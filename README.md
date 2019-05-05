@@ -25,6 +25,9 @@ Detect when someone leaves.
 
 # !play
 
+!play car crash
+!play 237375
+
 !play 2 yay
 !play yo
 !play boom
