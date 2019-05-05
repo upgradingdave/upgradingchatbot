@@ -1,0 +1,28 @@
+title: Upgrading Dave's Live Stream
+#email: your-email@example.com
+description: >- # this means to ignore newlines until "baseurl:"
+  I'm challenging myself to livestream my journey of learning clojure every Monday,
+  Wednesday, and Friday at 7:30am to 8:30am EST. Please join us! 
+  https://www.twitch.tv/upgradingdave
+baseurl: "/upgradingchatbot" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
+twitter_username: upgradingdave
+github_username:  upgradingdave
+
+# Build settings
+#markdown: kramdown
+theme: jekyll-theme-architect
+plugins:
+  - jekyll-feed
+
+# Exclude from processing.
+# The following items will not be processed, by default. Create a custom list
+# to override the default setting.
+# exclude:
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/
