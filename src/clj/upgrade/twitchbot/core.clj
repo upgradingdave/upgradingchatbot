@@ -1,5 +1,6 @@
 (ns upgrade.twitchbot.core
-  (:require [instaparse.core :as insta]
+  (:require [clojure.core.async :as async]
+            [instaparse.core :as insta]
             [upgrade.twitchbot.freesound :refer [search-and-play-nth!
                                                  players-stop!
                                                  fetch-mp3-and-play!
@@ -31,6 +32,26 @@
 (defn log [path-to-file msg]
   (let [conf (get-config)]
     (spit path-to-file (str msg "\n") :append true)))
+
+;; Common Messages
+(defn today-message [] "Today, we're coding a ChatBot using clojure to periodically welcome people to the stream.")
+
+(defn chatbot-help-message []
+  (str
+   "B) The UpgradingChatBot is online and here to help. "
+   "I love when people try out the chatbot. You can find a list of commands here: "
+   "https://github.com/upgradingdave/upgradingchatbot "
+   "Have fun! "))
+
+(defn welcome-message []
+  (str
+   "HeyGuys HeyGuys HeyGuys "
+   "Welcome! "
+   "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
+   "My goal is become a better programmer by exploring my favorite programming "
+   "language, Clojure and meeting other programmers like you. "
+   "If you're interested in clojure here's a great site to get started: "
+   "https://www.braveclojure.com/"))
 
 (defn command-parser []
   (str "cmd = play | stop | help | so\n"
@@ -190,6 +211,8 @@
                    (then)
                    (nick (:username conf))
                    (build))]
+    ;; Not sure 
+    ;;(.getExceptionListener client)
     (TwitchSupport/addSupport client)))
 
 (defn add-listeners [client]
@@ -208,20 +231,28 @@
   (. client (removeChannel channel "Later alligators"))
   (. client (shutdown "UpgradingChatBot is shutting down")))
 
-(comment
+(defn send-message-in-future
+  ([client millis message]
+   (async/go
+     (let [_ (async/alts! [(async/timeout millis)])]
+       (send-message client message)))))
 
-  (def conf (get-config))
-  (def channel (:channel conf))
-  (def client (create-client conf))
-  
-  (add-listeners client)
-  (. client (connect))
-  (. client addChannel (into-array String [channel]))
-  (send-message client "UpgradingChatBot is ALIVE")
+(defonce continue-repeating-messages? (atom true))
 
-  (leave-and-disconnect client channel)
+(defn schedule-repeating-messages
+  ([client millis messages]
+   (reset! continue-repeating-messages? true)
+   (async/go
+     (loop [t (async/timeout millis)]
+       (let [_ (async/alts! [t])]
+         (if @continue-repeating-messages?
+           (do
+             (doseq [m messages]
+               (send-message client m))
+             (recur (async/timeout millis)))))))))
 
-  )
+(defn stop-messages []
+  (reset! continue-repeating-messages? false))
 
 (defn start-chat-bot []
   (let [conf (get-config)
@@ -229,14 +260,27 @@
         client (create-client conf)]
 
     (add-listeners client)
+
     (. client (connect))
     (. client addChannel (into-array String [channel]))
     (send-message client "UpgradingChatBot is ALIVE")
+
+    (schedule-repeating-messages
+     client 600000
+     [(welcome-message)
+      (chatbot-help-message)
+      (today-message)])
+      
     client))
 
 (defn -main []
   (println "Attempting to start twitch chat bot ... ")
+  (start-chat-bot))
+
+(comment
+
+  (def client (start-chat-bot))
+  (leave-and-disconnect client channel)
+
 )
-
-
 

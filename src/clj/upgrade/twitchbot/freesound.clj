@@ -18,7 +18,7 @@
   (doseq [player @players]
     (if (player-alive? player)
       (.stop player)))
-  (players-cleanup))
+  (players-cleanup!))
 
 ;; methods to request info from the rest api
 

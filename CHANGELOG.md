@@ -1,14 +1,31 @@
 # TODO
 
-- create documentation and link to it
-- send periodic broadcast messages to let people know how to use chatbot
-- Setup unit tests
+## Chatbot
+
+- catch exceptions when chatbot client loses connection
+- refactor to pass config around (maybe use components?)
+- Setup unit tests?
 - Dynamically generate help for sounds (maybe !sfx command)
 - Cache sound files from freesound
 
+## Documentation Site
+
+- I started setting up a github pages / jekyll site, but it's a
+  mess. I'd much rather use a static code generator using clojure. i'd
+  like to write my own!
+
+## Write a todo list
+
+- Write a simple clojure app to replace this list. Maybe use github issues?
+
+# 2019-05-06
+
+- send periodic broadcast messages to let people know how to use chatbot
+
+
 # 2019-05-04
 
-- reply with freesound link 
+- chatbot will reply with a link to freesound.org
 
 # 2019-05-03
 
