@@ -2,9 +2,8 @@
   (:require [clojure.core.async :as async]
             [instaparse.core :as insta]
             [upgrade.twitchbot.freesound :refer [search-and-play-nth!
+                                                 play-sound!
                                                  players-stop!
-                                                 fetch-mp3-and-play!
-                                                 fetch-sound!
                                                  play-not-found!]]
             [upgrade.twitchbot.common :refer [decrypt]])
   (:import [net.engio.mbassy.listener Handler]
@@ -115,26 +114,25 @@
 
               :first-result-search
               (let [[_ [_ search-term]] args
-                    sound-result (search-and-play-nth! search-term 0)]
-                (if-let [sound-id (:id sound-result)]
-                  (.sendReply evt (freesound-reply (:url sound-result)))
-                  ;;(log (str "!play first-result-search " search-term " ==> " sound-id))
+                    url (search-and-play-nth! search-term 0)]
+                (if url 
+                  (.sendReply evt (freesound-reply url))
+                  ;; else
                   (play-not-found!)))
               
               :nth-result-search
               (let [[_ [_ idx [_ search-term]]] args
-                    sound-result (search-and-play-nth! search-term (Integer/parseInt idx))]
-                (if-let [sound-id (:id sound-result)]
-                  (.sendReply evt (freesound-reply (:url sound-result)))
-                  ;; (log (str "!play nth-result-search: " idx ", "
-                  ;;           search-term " ==> " sound-id))
+                    url (search-and-play-nth! search-term (Integer/parseInt idx))]
+                (if url
+                  (.sendReply evt (freesound-reply url))
+                  ;; else 
                   (play-not-found!)))
 
               :sound-id
               (let [[_ [_ sound-id]] args]
-                (if-let [sound-result (fetch-mp3-and-play! (fetch-sound! sound-id))]
-                  (.sendReply evt (freesound-reply (:url sound-result)))
-                  ;;(log (str "play! " sound-id))
+                (if-let [url (play-sound! sound-id)]
+                  (.sendReply evt (freesound-reply url))
+                  ;; else
                   (play-not-found!)))
 
               (play-not-found!)))

@@ -5,8 +5,11 @@
 - catch exceptions when chatbot client loses connection
 - refactor to pass config around (maybe use components?)
 - Setup unit tests?
+
+### play!
+
 - Dynamically generate help for sounds (maybe !sfx command)
-- Cache sound files from freesound
+- make sure input streams are closed
 
 ## Documentation Site
 
@@ -21,7 +24,7 @@
 # 2019-05-06
 
 - send periodic broadcast messages to let people know how to use chatbot
-
+- cache sound files from freesound
 
 # 2019-05-04
 

@@ -3,6 +3,11 @@
             [clojure.java.io :as io]
             [clj-http.client :as client]))
 
+(defn md5 [^String s]
+  (let [algorithm (java.security.MessageDigest/getInstance "MD5")
+        raw (.digest algorithm (.getBytes s))]
+    (format "%032x" (java.math.BigInteger. 1 raw))))
+
 ;; methods to manage mp3 player state
 
 (def players (atom '()))
@@ -26,22 +31,24 @@
   (decrypt "AAAADH2MEPeapWrwrhmAOKGL+hglh++LIwGUoydlUrUm4H7RDtfw+ztNc8IEkMM3aFZawUBdHnJr45pW0qXAzhu9XddLXns/"))
 
 (defn fetch-search-results! [search-term]
+  "Makes request to freesound api to retreive the json for search
+  results. This doesn't include mp3 previews, if you need mp3
+  previews, use fetch-sound! below"
   (let [url (str "https://freesound.org/apiv2/search/text/?query=" search-term)]
     (client/get (str url "&token=" api-key) {:as :json})))
 
 (defn fetch-sound! [sound-id]
-  (let [url (str "https://freesound.org/apiv2/sounds/" sound-id "/" "?token=" api-key)
-        response (client/get url {:as :json})]
-    (:body response)))
+  "Makes request to freesound api to retreive the json for a soundid"
+  (if sound-id
+    (let [url (str "https://freesound.org/apiv2/sounds/" sound-id "/" "?token=" api-key)
+          response (client/get url {:as :json})]
+      (:body response))))
 
 (defn fetch-mp3! [mp3-url]
   "Make request for mp3 and return byte array stream"
   (let [res (client/get mp3-url {:as :byte-array})]
     (if (= (:status res) 200)
       (:body res))))
-
-(defn first-search-result [search-response]
-  (first (:results (:body search-response))))
 
 (defn nth-search-result [search-response n]
   (nth (:results (:body search-response)) n nil))
@@ -61,36 +68,95 @@
   (let [fis (java.io.FileInputStream. filename)]
     (play-input-stream! fis opts)))
 
-(defn fetch-mp3-to-file! [sound-result]
+(defn get-preview-hq-mp3 [sound-result]
+  "Get the url of the hq mp3 preview found in results from fetch-sound!"
   (let [sound-id (:id sound-result)
-        mp3-url (:preview-hq-mp3 (:previews sound-result))  
-        stream (fetch-mp3! mp3-url)]
-    (if (not (nil? stream))
-      (with-open [w (io/output-stream (str sound-id ".mp3"))]
-        (.write w stream)))))
+        mp3-url (:preview-hq-mp3 (:previews sound-result))]
+    mp3-url))
 
-(defn fetch-mp3-and-play! [sound-result]
-  (let [sound-id (:id sound-result)
-        mp3-url (:preview-hq-mp3 (:previews sound-result))  
-        stream (fetch-mp3! mp3-url)]
-    (if (not (nil? stream))
-      (let [bis (java.io.ByteArrayInputStream. stream)]
-        (play-input-stream! bis)
-        sound-result))))
 
-;; convenience functions
+;; Public API, these are the functions that callers should use
+;; All of these implement caching so they won't make unnecessary
+;; freesound api calls or unneccessarily download mp3 files
 
-(defn search-and-save-first! [search-term]
-  (if-let [search-result (first-search-result (fetch-search-results! search-term))]
-    (fetch-mp3-to-file! (fetch-sound! (:id search-result)))))
+;; TODO move to config
+(def mp3-cache-dir "./mp3")
 
-(defn search-and-play-first! [search-term]  
-  (if-let [search-result (first-search-result (fetch-search-results! search-term))]
-    (fetch-mp3-and-play! (fetch-sound! (:id search-result)))))
+;; This is a map where keys are the guids that are generated from
+;; searches for sounds from freesound api. The values are urls to the
+;; freesound site. This is needed because mp3 files are cached, and we
+;; don't always make requests to freesound. 
+(def mp3-cache (atom {}))
 
-(defn search-and-play-nth! [search-term n]
-  (if-let [search-result (nth-search-result (fetch-search-results! search-term) n)]
-    (fetch-mp3-and-play! (fetch-sound! (:id search-result)))))
+(defn clear-mp3-cache []
+  (reset! mp3-cache {})
+  (let [all-files (file-seq (io/file mp3-cache-dir))
+        mp3-files (filter (fn [f] (and (.isFile f)
+                                       (= '(\m \p \3) (take-last 3 (.getName f)))))
+                          all-files)]
+    (doseq [f mp3-files]
+      (io/delete-file f true))))
+
+(defn fetch-mp3-and-play-and-cache! [sound-id guid file-name]
+  "Clear any existing file that exists for this sound-id, then
+  Download the mp3 preview, play it, and save it for later."
+  (io/delete-file file-name true)
+  (if-let [sound-result (fetch-sound! sound-id)]
+    (let [url (:url sound-result)
+          mp3-url (get-preview-hq-mp3 sound-result)
+          stream (fetch-mp3! mp3-url)]
+      (if (not (nil? stream))
+        (let [bis (java.io.ByteArrayInputStream. stream)]
+          (play-input-stream! bis)
+          (swap! mp3-cache assoc guid url)
+          (with-open [w (io/output-stream file-name)]
+            (.write w stream))
+          url)))))
+
+(defn play-sound!
+  ([sound-id] (play-sound! sound-id false))
+  ([sound-id clear-cache?]
+
+   (let [guid (md5 (str sound-id))
+         url (get @mp3-cache guid nil)
+         file-name (str mp3-cache-dir "/" guid ".mp3")
+         f (io/file file-name)]
+
+     (if (and (.exists f)
+              (not clear-cache?)
+              url)
+
+       ;; if the file exists in cache, use it.
+       (do
+         (play-input-stream! (io/input-stream f))
+         url)
+
+       ;; else
+       (fetch-mp3-and-play-and-cache! sound-id guid file-name)))))
+
+(defn search-and-play-nth!
+  ([search-term n] (search-and-play-nth! search-term n false))
+  ([search-term n clear-cache?]
+
+   (let [guid (md5 (str search-term n))
+         url (get @mp3-cache guid nil)
+         file-name (str mp3-cache-dir "/" guid ".mp3")
+         f (io/file file-name)]
+
+     (if (and (.exists f)
+              (not clear-cache?)
+              url)
+
+       ;; if the file exists in cache, use it.
+       (do
+         (play-input-stream! (io/input-stream f))
+         url)
+
+       ;; otherwise, do a search for sounds
+       (let [search-results (fetch-search-results! search-term) 
+             sound-result (nth-search-result search-results n)
+             sound-id (:id sound-result)]
+         (fetch-mp3-and-play-and-cache! sound-id guid file-name))))))
 
 (defn play-not-found! []
-  (fetch-mp3-and-play! (fetch-sound! 216090)))
+  (play-sound! 216090))
