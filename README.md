@@ -44,6 +44,8 @@ CHANGELOG.md for a list of ideas we might add soon)
 - !play car crash
 - !play 237375
 
+
+
 - !play 2 yay
 - !play yo
 - !play boom
@@ -56,6 +58,10 @@ CHANGELOG.md for a list of ideas we might add soon)
 - !play timber
 - !play jet
 - !play 1 underwater
+
+- Stand firm !play 397298
+- Gold !play 161315
+- Russian Festival !play 468218
 
 ## Development
 
