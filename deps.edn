@@ -5,6 +5,7 @@
  {clj-http {:mvn/version "3.9.1"}
   cheshire {:mvn/version "5.8.1"}
   compojure {:mvn/version "1.6.1"}
+  com.stuartsierra/component {:mvn/version "0.4.0"}
   instaparse {:mvn/version "1.4.10"}
   javazoom/jlayer {:mvn/version "1.0.1"}
   http-kit {:mvn/version "2.3.0"}

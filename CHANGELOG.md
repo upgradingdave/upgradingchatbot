@@ -1,10 +1,19 @@
 # TODO
 
+- refactor to pass config around (maybe use component?)
+- write a helper for reading config from file. add helpers for automatically decrypting
+
+## Extensions Backend Service
+
+- build http server to handle extension actions
+
 ## Chatbot
 
+- Tweak the scheduled messages. I'd like several different messages to 
+  be broadcasted every few minutes
 - catch exceptions when chatbot client loses connection
-- refactor to pass config around (maybe use components?)
 - Setup unit tests?
+- If needed, refactor code to allow for connecting to multiple channels
 
 ### play!
 
@@ -20,6 +29,11 @@
 ## Write a todo list
 
 - Write a simple clojure app to replace this list. Maybe use github issues?
+
+# 2019-05-08 
+
+- started working on extension backend
+- after the stream, started refactoring to use `component` library
 
 # 2019-05-06
 
