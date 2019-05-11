@@ -1,7 +1,7 @@
-(ns upgrade.twitchbot.freesound
-  (:require [upgrade.twitchbot.common :refer [decrypt]]
-            [clojure.java.io :as io]
-            [clj-http.client :as client]))
+(ns upgrade.freesound
+  (:require [clojure.java.io :as io]
+            [clj-http.client :as client]
+            [upgrade.common :refer [get-config decrypt]]))
 
 (defn md5 [^String s]
   (let [algorithm (java.security.MessageDigest/getInstance "MD5")
@@ -27,8 +27,9 @@
 
 ;; methods to request info from the rest api
 
-(defonce api-key 
-  (decrypt "AAAADH2MEPeapWrwrhmAOKGL+hglh++LIwGUoydlUrUm4H7RDtfw+ztNc8IEkMM3aFZawUBdHnJr45pW0qXAzhu9XddLXns/"))
+(defonce api-key
+  (let [conf (get-config)]
+    (decrypt (:key-file-path conf) "AAAADH2MEPeapWrwrhmAOKGL+hglh++LIwGUoydlUrUm4H7RDtfw+ztNc8IEkMM3aFZawUBdHnJr45pW0qXAzhu9XddLXns/")))
 
 (defn fetch-search-results! [search-term]
   "Makes request to freesound api to retreive the json for search

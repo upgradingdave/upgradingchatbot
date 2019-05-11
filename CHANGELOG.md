@@ -9,6 +9,9 @@
 
 ## Chatbot
 
+- Play command - make the download from freesound asynchronous. 
+- By default, limit search results to 30 seconds or less
+- Able to play any mp3 link? (how to filter though?)
 - Tweak the scheduled messages. I'd like several different messages to 
   be broadcasted every few minutes
 - catch exceptions when chatbot client loses connection

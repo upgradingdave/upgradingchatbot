@@ -42,10 +42,9 @@ CHANGELOG.md for a list of ideas we might add soon)
 # !play
 
 - !play car crash
-- !play 237375
-
-
-
+- (car crash) !play 237375
+- (powerup) !play 431329 
+- (8bit intro) !play 273539
 - !play 2 yay
 - !play yo
 - !play boom
@@ -79,4 +78,15 @@ To start a repl:
 ```
 ./scripts/repl.sh
 ```
+
+## Streaming Notes
+
+1. Set sound to "Multi Output Device" (from iShowU Audio Capture)
+2. Set backgroud music volume so OBS shows -45 db. Keep OBS volume 100%
+3. Set Mic volume in OBS so recording around -20 db (just above green)
+4. Open the twitch dashboard
+5. Start stream with "Starting Soon" OBS Scene
+6. Setup chat view, and windows, Setup Desktop OBS Scene
+7. Start chatbot
+
 

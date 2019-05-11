@@ -13,7 +13,7 @@
 (defn get-config []
   (let [key-file-path "./mykeyfile"]
     {:log-file-path "./twitchbot.log"
-     
+     :key-file-path key-file-path
      :twitchbot
      {:host "irc.chat.twitch.tv"
       :port 443

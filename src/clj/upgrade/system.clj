@@ -46,3 +46,6 @@
 (defn system []
   (component/system-map
    :twitchbot (new-twitchbot)))
+
+(comment
+  (def s (component/start (system))))

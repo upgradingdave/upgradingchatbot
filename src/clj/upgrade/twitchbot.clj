@@ -2,11 +2,10 @@
   (:require [clojure.core.async :as async]
             [instaparse.core :as insta]
             [upgrade.common :refer [log]]
-            [upgrade.twitchbot.freesound :refer [search-and-play-nth!
-                                                 play-sound!
-                                                 players-stop!
-                                                 play-not-found!]]
-            [upgrade.twitchbot.common :refer [decrypt]])
+            [upgrade.freesound :refer [search-and-play-nth!
+                                       play-sound!
+                                       players-stop!
+                                       play-not-found!]])
   (:import [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
            [org.kitteh.irc.client.library.event.channel
