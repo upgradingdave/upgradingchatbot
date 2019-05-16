@@ -1,6 +1,5 @@
 # TODO
 
-- refactor to pass config around (maybe use component?)
 - write a helper for reading config from file. add helpers for automatically decrypting
 
 ## Extensions Backend Service
@@ -9,18 +8,19 @@
 
 ## Chatbot
 
+- Add help for all other commands (we already did !play)
+- And also allow for this syntax: !help !play as well as !help play
+- Tweak the scheduled messages. I'd like several different messages to 
+  be broadcasted every few minutes. 
 - Play command - make the download from freesound asynchronous. 
 - By default, limit search results to 30 seconds or less
 - Able to play any mp3 link? (how to filter though?)
-- Tweak the scheduled messages. I'd like several different messages to 
-  be broadcasted every few minutes
 - catch exceptions when chatbot client loses connection
 - Setup unit tests?
 - If needed, refactor code to allow for connecting to multiple channels
 
 ### play!
 
-- Dynamically generate help for sounds (maybe !sfx command)
 - make sure input streams are closed
 
 ## Documentation Site
@@ -32,6 +32,20 @@
 ## Write a todo list
 
 - Write a simple clojure app to replace this list. Maybe use github issues?
+
+# 2019-05-15 
+
+- Dynamically generate help for sounds. You can now type 
+  `!help play` for extra help
+
+# 2019-05-11 (over the weekend)
+
+- Setup clojurescript compilation using figwheel
+
+# 2019-05-10
+
+- Created very basic http server using httpkit, and bidi
+- Before the stream, refactored code to use the component library
 
 # 2019-05-08 
 

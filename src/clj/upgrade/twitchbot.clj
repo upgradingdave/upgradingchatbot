@@ -19,17 +19,20 @@
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
            ))
 
+(def chatbot-command-list ["play" "stop" "help" "so"])
+
 ;; Common Messages
+
+;; "I love when people try out the chatbot. Fine more info here: "
+;;   "https://github.com/upgradingdave/upgradingchatbot "
+
 (defn today-message []
-  (str "Today, we're coding a ChatBot using clojure to periodically"
-       " welcome people to the stream."))
+  (str "Today, we're working on adding chat commands and maybe get back into building a Twitch Extension!"))
 
 (defn chatbot-help-message []
   (str
-   "B) The UpgradingChatBot is online and here to help. "
-   "I love when people try out the chatbot. You can find a list of commands here: "
-   "https://github.com/upgradingdave/upgradingchatbot "
-   "Have fun! "))
+   "B) The UpgradingChatBot is online and here to help! "
+   "Have fun! Here are the commands: " (apply str (interpose ", " (map (fn [command] (str "!" command)) chatbot-command-list))) ". Try `!help <command>` for more details on each command. Have fun!"))
 
 (defn welcome-message []
   (str
@@ -42,14 +45,16 @@
    "https://www.braveclojure.com/"))
 
 (defn command-parser []
-  (str "cmd = play | stop | help | so\n"
+  (str "cmd = " (apply str (interpose " | " chatbot-command-list)) "\n"
        "play = <\"!play\"> <space> sound-search\n"
        "sound-search = first-result-search | nth-result-search | sound-id \n"
        "first-result-search = #\".+\"\n"
        "nth-result-search = #\"\\d+\" <space> first-result-search\n"
        "sound-id = #\"\\d+\"\n"
        "stop = <\"!stop\">\n"
-       "help = <\"!help\">\n"
+       "help = <\"!help\"> | <\"!help\"> <space> "
+       (str "(" (apply str (interpose " | " (map (fn [cmd] (str "\"" cmd  "\"")) chatbot-command-list))) ")")
+       " \n"
        "so = <\"!so\"> <space> username | <\"!so\"> <space> <\"@\">username\n"
        "username= #\"[^\\s]+\"\n"
        "space= #\"\\s+\"\n"
@@ -78,12 +83,9 @@
         (cond
 
           (= command :help)
-          (.sendReply evt (str "Welcome! The UpgradingChatBot is online. "
-                               " Type !help for a full list of commands. "
-                               "Feel free to play around and have fun! "
-                               "All commands start with an exclamation point (!). "
-                               "For example, try '!play <search-term>' to play a sound. "
-                               "You can type !stop if the sound plays too long. "))
+          (cond
+            (= args "play")
+            (.sendReply evt (str "You can play mp3 sounds from the chat! For example, give this a shot: `!play sipping coffee`. The !play command will search https://freesound.org and will play the first result of the search. In order to play the second search result, for example, you can pass a search index like this: `!play 1 sipping coffee`.")))
           
           (= command :so)
           (if-let [[_ username] args]

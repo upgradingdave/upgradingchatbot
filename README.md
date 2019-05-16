@@ -81,7 +81,8 @@ To start a repl:
 
 ## Streaming Notes
 
-1. Set sound to "Multi Output Device" (from iShowU Audio Capture)
+1. Sound to 100% and then set sound to "Multi Output Device" (from
+   iShowU Audio Capture)
 2. Set backgroud music volume so OBS shows -45 db. Keep OBS volume 100%
 3. Set Mic volume in OBS so recording around -20 db (just above green)
 4. Open the twitch dashboard
