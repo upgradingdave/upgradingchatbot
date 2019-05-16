@@ -1,5 +1,6 @@
 (ns upgrade.web.http
-  (:require [upgrade.common :refer [log]]
+  (:require [clojure.java.io :as io]
+            [upgrade.common :refer [log]]
             [org.httpkit.server :refer [run-server]]
             [bidi.bidi :refer [match-route path-for]]
             [bidi.ring :refer (make-handler)]
@@ -8,20 +9,34 @@
 
 (defn color-handler
   [request]
-  (println (str request))
   (log (str request))
   (res/response (str request)))
 
-(def routes ["/color/query" color-handler])
+(defn file-handler [path-to-file]
+  (fn [request]
+    (res/response (io/file (str "resources/public/" path-to-file)))))
+
+(defn resources-handler
+  [request]
+  (let [uri (:uri request)
+        path-to-file (str "resources/public" uri)
+        file (io/file path-to-file)]
+    (println path-to-file)
+    (if (and file (.exists file))
+      (res/response file)
+      (res/response "file not found"))
+    ))
+
+(def routes
+  ["/" {"color/query" color-handler
+        "index.html" (file-handler "index.html")
+        #"js/.+" resources-handler
+        }])
 
 (def handler (make-handler routes))
 
 (defn app [req]
-  (let [route (handler req)]
-    {:status  200
-     :headers {"Content-Type" "text/html"}
-     :body    (str route)}
-    ))
+  (handler req))
 
 (defonce server (atom nil))
 
@@ -44,3 +59,4 @@
 ;;(run-server app {:port 8080})
 
 
+(println file)

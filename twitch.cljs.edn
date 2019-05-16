@@ -1,0 +1,4 @@
+{:main upgrade.app
+ :output-to "resources/public/js/twitch.js"
+ :output-dir "resources/public/js/out"
+ }

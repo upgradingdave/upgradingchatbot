@@ -1,5 +1,5 @@
 {:paths
- ["src/clj"]
+ ["src/clj" "src/cljs" "resources/public"]
 
  :deps
  {bidi {:mvn/version "2.1.6"}
@@ -10,7 +10,8 @@
   javazoom/jlayer {:mvn/version "1.0.1"}
   http-kit {:mvn/version "2.3.0"}
   hiccup {:mvn/version "1.0.5"}
-  org.clojure/core.async {:mvn/version "0.4.490"}
+  org.clojure/clojurescript {:mvn/version "1.10.516"}  
+  org.clojure/core.async {:mvn/version "0.4.490"}  
   org.kitteh.irc/client-lib {:mvn/version "7.1.0"}
   ring/ring-core  {:mvn/version "1.6.3"}
   upgrade/encrypt {:mvn/version "0.0.1"}}
@@ -18,6 +19,11 @@
  :aliases {:repl
            {:extra-deps
             {cider/cider-nrepl {:mvn/version "0.21.1"}
-             org.clojure/tools.deps.alpha {:mvn/version "0.6.496"}}}}}
+             org.clojure/tools.deps.alpha {:mvn/version "0.6.496"}}}
+
+          :figwheel
+           {:extra-deps
+            {com.bhauman/figwheel-main {:mvn/version "0.2.0"}}}
+           }}
 
 

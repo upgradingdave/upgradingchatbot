@@ -7,3 +7,5 @@ docs/_site
 docs/.sass-cache
 docs/.jekyll-metadata
 mp3/
+resources/public/js/out/
+resources/public/js/twitch.js
