@@ -58,5 +58,3 @@
 
 ;;(run-server app {:port 8080})
 
-
-(println file)

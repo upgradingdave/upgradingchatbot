@@ -19,7 +19,7 @@
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
            ))
 
-(def chatbot-command-list ["play" "stop" "help" "so"])
+(def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome"])
 
 ;; Common Messages
 
@@ -32,30 +32,44 @@
 (defn chatbot-help-message []
   (str
    "B) The UpgradingChatBot is online and here to help! "
-   "Have fun! Here are the commands: " (apply str (interpose ", " (map (fn [command] (str "!" command)) chatbot-command-list))) ". Try `!help <command>` for more details on each command. Have fun!"))
+   "Have fun! Here are the commands: " (apply str (interpose ", " (map (fn [command] (str "!" command)) chatbot-command-list))) ". Try `!help <command>` for more details on each command."))
 
-(defn welcome-message []
-  (str
-   "HeyGuys "
-   "Welcome! "
-   "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
-   "My goal is become a better programmer by exploring my favorite programming "
-   "language, Clojure and meeting other programmers like you. "
-   "If you're interested in clojure here's a great site to get started: "
-   "https://www.braveclojure.com/"))
+(defn welcome-message
+  ([]
+   (str
+    "HeyGuys "
+    "Welcome! "
+    "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
+    "My goal is become a better programmer by exploring my favorite programming "
+    "language, Clojure and meeting other programmers like you. "
+    "If you're interested in clojure here's a great site to get started: "
+    "https://www.braveclojure.com/"))
+  ([username]
+   (str
+    "HeyGuys "
+    "Welcome, " username "! Great to have you here, grab a frosty beverage and "
+    "help us write some clojure. If you have suggestions or questions, please don't "
+    "be shy. Type !help in the chat for a list of commands and please try them out!")))
 
 (defn command-parser []
   (str "cmd = " (apply str (interpose " | " chatbot-command-list)) "\n"
+       "help = <\"!help\"> | <\"!help\"> <space> "
+       (str "(" (apply str (interpose " | " (map (fn [cmd] (str "\"" cmd  "\""))
+                                                 chatbot-command-list))) ")") " \n"
+
        "play = <\"!play\"> <space> sound-search\n"
        "sound-search = first-result-search | nth-result-search | sound-id \n"
        "first-result-search = #\".+\"\n"
        "nth-result-search = #\"\\d+\" <space> first-result-search\n"
        "sound-id = #\"\\d+\"\n"
+       
        "stop = <\"!stop\">\n"
-       "help = <\"!help\"> | <\"!help\"> <space> "
-       (str "(" (apply str (interpose " | " (map (fn [cmd] (str "\"" cmd  "\"")) chatbot-command-list))) ")")
-       " \n"
        "so = <\"!so\"> <space> username | <\"!so\"> <space> <\"@\">username\n"
+
+       "today = <\"!today\">\n"
+
+       "welcome = <\"!welcome\"> | <\"!welcome\"> <space> <\"@\">username\n"
+       
        "username= #\"[^\\s]+\"\n"
        "space= #\"\\s+\"\n"
        ))
@@ -85,7 +99,12 @@
           (= command :help)
           (cond
             (= args "play")
-            (.sendReply evt (str "You can play mp3 sounds from the chat! For example, give this a shot: `!play sipping coffee`. The !play command will search https://freesound.org and will play the first result of the search. In order to play the second search result, for example, you can pass a search index like this: `!play 1 sipping coffee`.")))
+            (.sendReply evt (str "You can play mp3 sounds from the chat! For example, give this a shot: `!play sipping coffee`. The !play command will search https://freesound.org and will play the first result of the search. In order to play the second search result, for example, you can pass a search index like this: `!play 1 sipping coffee`."))
+
+            :else
+            (.sendReply evt (chatbot-help-message))
+
+            )
           
           (= command :so)
           (if-let [[_ username] args]
@@ -94,6 +113,14 @@
               (.sendReply evt (str "Shout out to https://www.twitch.tv/"
                                    username
                                    " Go and check out their stream!"))))
+
+          (= command :today)
+          (.sendReply evt (today-message))
+
+          (= command :welcome)
+          (if args
+            (.sendReply evt (welcome-message (str "@" (second args))))
+            (.sendReply evt (welcome-message)))
 
           (= command :play)
           (let [[_ [search-type]] args]

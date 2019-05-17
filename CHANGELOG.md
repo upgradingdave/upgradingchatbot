@@ -33,6 +33,11 @@
 
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
+# 2019-05-17
+
+- Added !today and !welcome commands
+- Started implementing "change color" twitch example in clojurescript
+
 # 2019-05-15 
 
 - Dynamically generate help for sounds. You can now type 

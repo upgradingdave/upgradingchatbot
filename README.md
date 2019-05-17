@@ -83,11 +83,12 @@ To start a repl:
 
 1. Sound to 100% and then set sound to "Multi Output Device" (from
    iShowU Audio Capture)
-2. Set backgroud music volume so OBS shows -45 db. Keep OBS volume 100%
+2. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
 3. Set Mic volume in OBS so recording around -20 db (just above green)
 4. Open the twitch dashboard
-5. Start stream with "Starting Soon" OBS Scene
-6. Setup chat view, and windows, Setup Desktop OBS Scene
-7. Start chatbot
+5. Update the "Going Live" message
+6. Start stream with "Starting Soon" OBS Scene
+7. Setup chat view, and windows, Setup Desktop OBS Scene
+8. Start chatbot
 
 
