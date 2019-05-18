@@ -4,13 +4,42 @@
             [org.httpkit.server :refer [run-server]]
             [bidi.bidi :refer [match-route path-for]]
             [bidi.ring :refer (make-handler)]
-            [ring.util.response :as res]))
+            [ring.util.response :as res]
+            [ring.middleware.json :refer [wrap-json-response]]
+            [ring.mock.request :as mock]))
 
 
-(defn color-handler
+
+(defonce http-state (atom {:color "purple"}))
+
+(def available-colors {0 "purple"
+                       1 "red"
+                       2 "green"
+                       3 "blue"
+                       4 "orange"
+                       5 "black"
+                       6 "white"})
+
+(defn find-color-idx [color]
+  (first (first (filter (fn [[k v]] (= v color)) available-colors))))
+
+(defn next-color [color available-colors]
+  (let [idx (find-color-idx color)]
+    (if (>= idx (dec (count available-colors)))
+      (get available-colors 0)
+      (get available-colors (inc idx)))))
+
+(defn color-query-handler
   [request]
-  (log (str request))
-  (res/response (str request)))
+  "Return the current color. wrap-json-response will automatically
+  convert clojure in body into json"
+  (res/response @http-state))
+
+(defn next-color-handler
+  [request]
+  "Return the next color."
+  (swap! http-state assoc :color (next-color (:color @http-state) available-colors))
+  (res/response @http-state))
 
 (defn file-handler [path-to-file]
   (fn [request]
@@ -21,19 +50,21 @@
   (let [uri (:uri request)
         path-to-file (str "resources/public" uri)
         file (io/file path-to-file)]
-    (println path-to-file)
     (if (and file (.exists file))
       (res/response file)
       (res/response "file not found"))
     ))
 
 (def routes
-  ["/" {"color/query" color-handler
+  ["/" {"color/query" color-query-handler
+        "color/cycle" next-color-handler
         "index.html" (file-handler "index.html")
         #"js/.+" resources-handler
         }])
 
-(def handler (make-handler routes))
+(def handler
+  (wrap-json-response
+   (make-handler routes)))
 
 (defn app [req]
   (handler req))

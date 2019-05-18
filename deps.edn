@@ -10,10 +10,11 @@
   javazoom/jlayer {:mvn/version "1.0.1"}
   http-kit {:mvn/version "2.3.0"}
   hiccup {:mvn/version "1.0.5"}
-  org.clojure/clojurescript {:mvn/version "1.10.516"}  
   org.clojure/core.async {:mvn/version "0.4.490"}  
   org.kitteh.irc/client-lib {:mvn/version "7.1.0"}
   ring/ring-core  {:mvn/version "1.6.3"}
+  ring/ring-json {:mvn/version "0.4.0"}
+  ring/ring-mock {:mvn/version "0.4.0"}
   upgrade/encrypt {:mvn/version "0.0.1"}}
  
  :aliases {:repl
@@ -23,7 +24,11 @@
 
           :figwheel
            {:extra-deps
-            {com.bhauman/figwheel-main {:mvn/version "0.2.0"}}}
+            {com.bhauman/figwheel-main {:mvn/version "0.2.0"}
+             org.clojure/clojurescript {:mvn/version "1.10.516"}
+             re-frame {:mvn/version "0.10.6"}
+             day8.re-frame/http-fx {:mvn/version "0.1.6"}
+             }}
            }}
 
 

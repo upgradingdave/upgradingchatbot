@@ -4,7 +4,7 @@
 
 ## Extensions Backend Service
 
-- build http server to handle extension actions
+- enable https
 
 ## Chatbot
 
@@ -33,17 +33,26 @@
 
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
-# 2019-05-17
+# 2019-05-18 (off stream)
+
+- basic color changer webapp is working
+- added re-frame, http-fx and coded basic re-frame app
+- added ring-json dependency. now the http server will automatically
+  return json if clojure data structures are returned in respsonse
+  body
+- add ring-mock
+
+# 2019-05-17 (on stream)
 
 - Added !today and !welcome commands
 - Started implementing "change color" twitch example in clojurescript
 
-# 2019-05-15 
+# 2019-05-15 (on stream)
 
 - Dynamically generate help for sounds. You can now type 
   `!help play` for extra help
 
-# 2019-05-11 (over the weekend)
+# 2019-05-11 (off stream)
 
 - Setup clojurescript compilation using figwheel
 
