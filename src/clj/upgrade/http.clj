@@ -41,9 +41,9 @@
   (swap! http-state assoc :color (next-color (:color @http-state) available-colors))
   (res/response @http-state))
 
-(defn file-handler [path-to-file]
-  (fn [request]
-    (res/response (io/file (str "resources/public/" path-to-file)))))
+;; (defn file-handler [path-to-file]
+;;   (fn [request]
+;;     (res/response (io/file (str "resources/public/" path-to-file)))))
 
 (defn resources-handler
   [request]
@@ -58,7 +58,7 @@
 (def routes
   ["/" {"color/query" color-query-handler
         "color/cycle" next-color-handler
-        "index.html" (file-handler "index.html")
+        #".+\.html" resources-handler
         #"js/.+" resources-handler
         }])
 

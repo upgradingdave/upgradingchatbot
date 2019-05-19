@@ -5,14 +5,27 @@
             [re-frame.db :as db]
             [re-frame.core :as rf]))
 
+;; Manage Twitch Extensions here:
+;;https://dev.twitch.tv/console/extensions
+;; Docs are here: 
+;;https://dev.twitch.tv/docs/extensions
+
+;; TODO move this to a config file
+(def url "http://localhost:8081")
+
 (def twitch js/window.Twitch.ext)
 
+(defn log [msg]
+  (js/console.log msg)
+  (twitch.rig.log msg))
 
 ;; EVENTS
 
 (rf/reg-event-db
  :initialize
- (fn [_ _] {}))
+ (fn [_ [_ token]]
+   (log (str "Initializing app-db"))
+   {:token token}))
 
 ;; TODO: implement Loading
 (rf/reg-event-db
@@ -25,29 +38,37 @@
  (fn [db [_ result]]
    (assoc db :ajax/fail-response result)))
 
+;;    requests[req].headers = { 'Authorization': 'Bearer ' + token };
+;; Need to set this request header
 (rf/reg-event-fx
  :color/query
  (fn [{:keys [db]} _]
-   {:db (assoc db :loading true)
-    :http-xhrio {:method :get
-                 :uri "http://localhost:8081/color/query"
-                 :timeout 8000
-                 :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success [:color/result]
-                 :on-failure [:ajax/fail]}}))
+   (let [token (:token db)]
+     {:db (assoc db :loading true)
+      :http-xhrio {:method :get
+                   :headers {"Authorization" (str "Bearer " token)}
+                   :uri (str url "/color/query")
+                   :timeout 8000
+                   ;;:response-format (ajax/json-response-format {:keywords? true})
+                   :response-format (ajax/raw-response-format)
+                   :on-success [:color/result]
+                   :on-failure [:ajax/fail]}})))
 
 (rf/reg-event-fx
  :color/cycle
  (fn [{:keys [db]} _]
-   {:db (assoc db :loading true)
-    :http-xhrio {:method :post
-                 :uri "http://localhost:8081/color/cycle"
-                 :params nil
-                 :timeout 5000
-                 :format (ajax/json-request-format)
-                 :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success [:color/result]
-                 :on-failure [:ajax/fail]}}))
+   (let [token (:token db)]
+     {:db (assoc db :loading true)
+      :http-xhrio {:method :post
+                   :headers {"Authorization" (str "Bearer " token)}                 
+                   :uri (str url "/color/cycle")
+                   :params nil
+                   :timeout 5000
+                   :format (ajax/json-request-format)
+                   ;;:response-format (ajax/json-response-format {:keywords? true})
+                   :response-format (ajax/raw-response-format)                 
+                   :on-success [:color/result]
+                   :on-failure [:ajax/fail]}})))
 
 ;; SUBSCRIPTIONS
 
@@ -79,14 +100,6 @@
         [:div {:style {:color "red"}}
          [:pre [:code (with-out-str (cljs.pprint/pprint @ajax-fail))]]]]
 
-       ;; color cycle controls
-       [:div
-        [:div "Would you care to cycle a color?"]
-        [:button {:on-click (fn [evt] (rf/dispatch [:color/cycle]))
-                  :disabled (nil? @color-query-response)}
-         "Yes, I would"]
-        ]
-       
         ;; color circle
        [:div {:style {:float "left" :position "relative" :left "10%"}}
         [:div {:id "color"
@@ -95,7 +108,7 @@
                        :margin-top "30px"
                        :width "100px"
                        :height "100px"
-                       :background-color (or (:color @color-query-response) "#6441A4")
+                       :background-color (or @color-query-response "#6441A4")
                        :float "left"
                        :position "relative"
                        :left "-50%"
@@ -103,9 +116,21 @@
 
         ]])))
 
+;; Twitch Specific Stuff
+(.onAuthorized
+ twitch
+ (fn [auth]
+   (let [channelId (.-channelId auth)
+         clientId  (.-clientId auth)
+         token (.-token auth)
+         userId (.-userId auth)] 
+     (log "Successfully Authorized by Twitch")
+
+     (rf/dispatch-sync [:initialize token])
+     )))
+
 (defn run
   []
-  (rf/dispatch-sync [:initialize])
   (reagent/render [view]
                   (js/document.getElementById "app")))
 
