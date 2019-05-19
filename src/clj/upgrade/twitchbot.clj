@@ -41,7 +41,7 @@
     "Welcome! "
     "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
     "My goal is become a better programmer by exploring my favorite programming "
-    "language, Clojure and meeting other programmers like you. "
+    "language Clojure, and meet other programmers like you. "
     "If you're interested in clojure here's a great site to get started: "
     "https://www.braveclojure.com/"))
   ([username]
@@ -270,4 +270,37 @@
   (. client addChannel (into-array String [channel]))
   
   client)
+
+(defn start-twitchbot!
+  [{host :host
+    port :port
+    username :username
+    oauth :oauth
+    channel :channel
+    :as twitchbot}]
+  (log "Attempting to start twitch chat bot ...")
+  (let [client (create-chatbot host port username oauth)
+        ;; oauth is no longer needed, so let's get rid of it
+        twitchbot (assoc twitchbot
+                         :oauth nil
+                         :client (connect-and-add-channel client channel)
+                         :running? true)]
+
+    ;; now we have a fully started twichbot
+    (send-message twitchbot "UpgradingChatBot is ALIVE")
+
+    ;; setup scheduled messages
+    (schedule-repeating-messages
+     twitchbot
+     600000 ;; every 10 minutes
+     [(welcome-message)
+      (chatbot-help-message)
+      (today-message)])
+    
+    twitchbot))
+
+(defn stop-twitchbot! [twitchbot]
+  (log "Attempting to stop twitch chat bot ...")
+  (leave-and-disconnect twitchbot)
+  (assoc twitchbot :running? false))
 

@@ -1,14 +1,12 @@
-(ns upgrade.web.http
+(ns upgrade.http
   (:require [clojure.java.io :as io]
             [upgrade.common :refer [log]]
-            [org.httpkit.server :refer [run-server]]
+            [org.httpkit.server :as httpkit]
             [bidi.bidi :refer [match-route path-for]]
             [bidi.ring :refer (make-handler)]
             [ring.util.response :as res]
             [ring.middleware.json :refer [wrap-json-response]]
             [ring.mock.request :as mock]))
-
-
 
 (defonce http-state (atom {:color "purple"}))
 
@@ -41,10 +39,6 @@
   (swap! http-state assoc :color (next-color (:color @http-state) available-colors))
   (res/response @http-state))
 
-;; (defn file-handler [path-to-file]
-;;   (fn [request]
-;;     (res/response (io/file (str "resources/public/" path-to-file)))))
-
 (defn resources-handler
   [request]
   (let [uri (:uri request)
@@ -69,23 +63,21 @@
 (defn app [req]
   (handler req))
 
-(defonce server (atom nil))
+;; The #' is useful when you want to hot-reload code
+;; You may want to take a look: https://github.com/clojure/tools.namespace
+;; and http://http-kit.org/migration.html#reload
+(defn run-server [port]
+  (httpkit/run-server #'app {:port port}))
 
-(defn stop-server []
-  (when-not (nil? @server)
+(defn start-httpkit! [{port :port :as httpkit}]
+  (assoc httpkit
+         :server (run-server port)
+         :running? true))
+
+(defn stop-httpkit! [{server :server :as httpkit}]
+  (when-not (nil? server)
     ;; graceful shutdown: wait 100ms for existing requests to be finished
     ;; :timeout is optional, when no timeout, stop immediately
-    (@server :timeout 100)
-    (reset! server nil)))
-
-(defn start-server []
-  (reset! server (run-server #'app {:port 8081})))
-
-(defn -main [& args]
-  ;; The #' is useful when you want to hot-reload code
-  ;; You may want to take a look: https://github.com/clojure/tools.namespace
-  ;; and http://http-kit.org/migration.html#reload
-  (start-server))
-
-;;(run-server app {:port 8080})
-
+    (assoc httpkit
+           :server (server :timeout 100)
+           :running? false)))

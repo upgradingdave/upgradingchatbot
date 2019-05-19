@@ -1,51 +1,74 @@
 (ns upgrade.system
-  (:require [com.stuartsierra.component :as component]
-            [upgrade.common :refer [log get-config]]
-            [upgrade.twitchbot :as bot]))
+  (:require [upgrade.common :refer [log get-config]]
+            [upgrade.twitchbot :as bot]
+            [upgrade.http :as http]))
 
-;; TODO: logger might be a separate component?
+;; This namespace contains all the nasty state management code.
 
-(defrecord TwitchChatBot [host port username oauth channel client]
-  component/Lifecycle
+(defonce system (atom {}))
 
-  (start [twitchbot]
-    (log "Attempting to start twitch chat bot ...")
-    (let [twitchbot (assoc twitchbot
-                           :host host
-                           :port port
-                           :username username
-                           :oauth oauth
-                           :channel channel)
-          client (bot/create-chatbot host port username oauth)
-          ;; oauth is no longer needed, so let's get rid of it
-          twitchbot (assoc twitchbot :oauth nil)
-          twitchbot (assoc twitchbot :client (bot/connect-and-add-channel client channel))]
+(defn start-component-really! [component-kw component start-fn]
+  (let [component (assoc
+                   (start-fn component)
+                   :running? true)]
+    (swap! system assoc component-kw component)))
 
-      ;; now we have a fully started twichbot
-      (bot/send-message twitchbot "UpgradingChatBot is ALIVE")
-      (bot/schedule-repeating-messages
-       twitchbot
-       600000 ;; every 10 minutes
-       [(bot/welcome-message)
-        (bot/chatbot-help-message)
-        (bot/today-message)])
+(defn start-component!
+  "Generic, idempotent function to start a component. If the component
+  was already started, this just returns the system map. If component
+  has never been started then we try to get config and create the
+  component for the first time. If the component is not running, we
+  try to restart it"
+  [component-kw start-fn]
+  (let [component (get @system component-kw)]
+    (if (nil? component)
+      ;; component has never been started, so start it using config
+      (start-component-really! component-kw (get (get-config) component-kw) start-fn)
 
-      twitchbot
-      ))
+      ;; component has been started before, check if it's running
+      (if (:running? component)
+        ;; if running, just return it
+        @system
 
-  (stop [twitchbot]
-    (log "Attempting to stop twitch chat bot ...")
-    (bot/leave-and-disconnect twitchbot)
-    ;; TODO should I set all fields to nil? like host, username, etc?
-    ;; TODO should I set a boolean running? to false?
-    (assoc twitchbot :client nil)))
+        ;; otherwise, restart component
+        (start-component-really! component-kw component start-fn)))))
 
-(defn new-twitchbot []
-  (map->TwitchChatBot (:twitchbot (get-config))))
+(defn stop-component!
+  "Generic, idempotent function to stop a component"
+  [component-kw stop-fn]
+  (let [component (get @system component-kw)]
+    (if (:running? component)
+      (let [component (assoc
+                       (stop-fn component)
+                       :running? false)]
+        (swap! system assoc component-kw component))
+      ;; if not running, just return it
+      @system)))
 
-(defn system []
-  (component/system-map
-   :twitchbot (new-twitchbot)))
+(defn start-twitchbot! []
+  (start-component! :twitchbot bot/start-twitchbot!))
 
-(comment
-  (def s (component/start (system))))
+(defn stop-twitchbot! []
+  (stop-component! :twitchbot bot/stop-twitchbot!))
+
+(defn start-httpkit! []
+  (start-component! :httpkit http/start-httpkit!))
+
+(defn stop-httpkit! []
+  (stop-component! :httpkit http/stop-httpkit!))
+
+(defn start-system!
+  ([config]
+   (start-twitchbot! config)
+   (start-httpkit! config)))
+
+(defn stop-system!
+  ([] (start-system! (get-config)))
+  ([config]
+   (start-twitchbot! config)
+   (start-httpkit! config)))
+
+;; TODO implement command line arg parsing
+(defn -main [& args])
+
+

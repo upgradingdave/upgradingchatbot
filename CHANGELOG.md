@@ -1,10 +1,13 @@
 # TODO
 
-- write a helper for reading config from file. add helpers for automatically decrypting
+- write a helper for reading config from file. add helpers for
+  automatically decrypting
+- implement command line parsing for main 
 
 ## Extensions Backend Service
 
-- enable https
+- parse jwt token in backend
+- enable https? (when needed, I'll handle this with apache or nginx)
 
 ## Chatbot
 
@@ -33,49 +36,62 @@
 
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
-# 2019-05-18 (off stream)
+# Complete
 
-- basic color changer webapp is working
+## 2019-05-19 (off stream)
+
+- cljs version of panel.html is working against nodejs backend I can
+  run the simple "change color circle" example by using the twitch
+  developer rig, and starting the front end using my version of
+  panel.html (which uses cljs). My front end calls their nodejs
+  backend and it works!
+- removed component lib. I decided it's not really helping. I can write
+  start and stop myself
+- added clojure.java-time and buddy dependencies 
+
+## 2019-05-18 (off stream)
+
+- basic color changer cljs/clj webapp is working (but no twitch integration yet)
 - added re-frame, http-fx and coded basic re-frame app
 - added ring-json dependency. now the http server will automatically
   return json if clojure data structures are returned in respsonse
   body
 - add ring-mock
 
-# 2019-05-17 (on stream)
+## 2019-05-17 (on stream)
 
 - Added !today and !welcome commands
 - Started implementing "change color" twitch example in clojurescript
 
-# 2019-05-15 (on stream)
+## 2019-05-15 (on stream)
 
 - Dynamically generate help for sounds. You can now type 
   `!help play` for extra help
 
-# 2019-05-11 (off stream)
+## 2019-05-11 (off stream)
 
 - Setup clojurescript compilation using figwheel
 
-# 2019-05-10
+## 2019-05-10
 
 - Created very basic http server using httpkit, and bidi
 - Before the stream, refactored code to use the component library
 
-# 2019-05-08 
+## 2019-05-08 
 
 - started working on extension backend
 - after the stream, started refactoring to use `component` library
 
-# 2019-05-06
+## 2019-05-06
 
 - send periodic broadcast messages to let people know how to use chatbot
 - cache sound files from freesound
 
-# 2019-05-04
+## 2019-05-04
 
 - chatbot will reply with a link to freesound.org
 
-# 2019-05-03
+## 2019-05-03
 
 - Able to specify freesound sound id (in addition to searches)
 - If no results found, then run (play-not-found)
@@ -84,7 +100,7 @@
 - Detect users joining
 - Detect users leaving
 
-# 2019-05-01 
+## 2019-05-01 
 
 - implemented !so command
 - started implementing detection of user's joining the channel

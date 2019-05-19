@@ -10,10 +10,15 @@
   (.. (EncryptionManager.)
       (decrypt (java.io.File. key-file-path) message)))
 
+;; TODO eventually move this to a config file
 (defn get-config []
   (let [key-file-path "./mykeyfile"]
     {:log-file-path "./twitchbot.log"
      :key-file-path key-file-path
+
+     :httpkit
+     {:port 8081}
+     
      :twitchbot
      {:host "irc.chat.twitch.tv"
       :port 443
