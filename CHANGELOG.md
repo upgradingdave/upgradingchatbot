@@ -9,6 +9,12 @@
 - parse jwt token in backend
 - enable https? (when needed, I'll handle this with apache or nginx)
 
+## Floating emotes
+
+- refactor init code out of setup
+- able to do multiple emotes at same time
+- implement emotes besides HeyGuys
+
 ## Chatbot
 
 - Add help for all other commands (we already did !play)
@@ -37,6 +43,20 @@
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
 # Complete
+
+## 2019-05-24 (off stream)
+
+- HeyGuys image will bounce around when someone does a HeyGuys emote
+- got websockets working (was a lot easier than I thought it would be)
+- connected chat to the bouncing P4js images
+
+## 2019-05-24 (on stream)
+
+- "HeyGuys" image bounces around the canvas!
+
+## 2019-05-20
+
+- backend twitch extension is working (but no jwt processing yet)
 
 ## 2019-05-19 (off stream)
 

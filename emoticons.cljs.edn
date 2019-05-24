@@ -1,0 +1,4 @@
+{:main upgrade.emoticons
+ :output-to "resources/public/js/emoticons.js"
+ :output-dir "resources/public/js/out"
+ }

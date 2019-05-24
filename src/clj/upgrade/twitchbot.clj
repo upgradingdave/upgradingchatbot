@@ -1,11 +1,14 @@
 (ns upgrade.twitchbot
   (:require [clojure.core.async :as async]
             [instaparse.core :as insta]
+            [org.httpkit.server :refer [send!]]
             [upgrade.common :refer [log]]
             [upgrade.freesound :refer [search-and-play-nth!
                                        play-sound!
                                        players-stop!
-                                       play-not-found!]])
+                                       play-not-found!]]
+            [upgrade.http :refer [ws-clients]]
+            )
   (:import [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
            [org.kitteh.irc.client.library.event.channel
@@ -20,6 +23,7 @@
            ))
 
 (def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome"])
+(def emote-list ["HeyGuys"])
 
 ;; Common Messages
 
@@ -52,7 +56,8 @@
     "be shy. Type !help in the chat for a list of commands and please try them out!")))
 
 (defn command-parser []
-  (str "cmd = " (apply str (interpose " | " chatbot-command-list)) "\n"
+  (str "cmd = " (apply str (interpose " | " (concat chatbot-command-list emote-list))) "\n"
+       "HeyGuys = <\"HeyGuys\"> \n"
        "help = <\"!help\"> | <\"!help\"> <space> "
        (str "(" (apply str (interpose " | " (map (fn [cmd] (str "\"" cmd  "\""))
                                                  chatbot-command-list))) ")") " \n"
@@ -95,6 +100,10 @@
       ;; otherwise, do command
       (let  [[_ [command args]] parse-result] 
         (cond
+
+          (= command :HeyGuys)
+          (doseq [ch @ws-clients]
+            (send! ch "HeyGuys"))
 
           (= command :help)
           (cond

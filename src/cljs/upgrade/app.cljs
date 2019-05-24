@@ -5,6 +5,8 @@
             [re-frame.db :as db]
             [re-frame.core :as rf]))
 
+;; https://static-cdn.jtvnw.net/emoticons/v1/30259/1.0
+
 ;; Manage Twitch Extensions here:
 ;;https://dev.twitch.tv/console/extensions
 ;; Docs are here: 
@@ -36,10 +38,9 @@
 (rf/reg-event-db
  :ajax/fail
  (fn [db [_ result]]
+   (log "hmmm, failing??!!")
    (assoc db :ajax/fail-response result)))
 
-;;    requests[req].headers = { 'Authorization': 'Bearer ' + token };
-;; Need to set this request header
 (rf/reg-event-fx
  :color/query
  (fn [{:keys [db]} _]
@@ -80,15 +81,23 @@
   :ajax/fail-response
   (fn [db _] (:ajax/fail-response db)))
 
+(rf/reg-sub
+  :twitch/token
+  (fn [db _] (:token db)))
 
 ;; VIEWS
 
 (defn view []
   (let [color-query-response (rf/subscribe [:color/query-response])
-        ajax-fail (rf/subscribe [:ajax/fail-response])]
+        ajax-fail (rf/subscribe [:ajax/fail-response])
+        token (rf/subscribe [:twitch/token])]
     (fn []
       [:div
 
+       (if @token
+         [:div {:style {:color :green}} "Authorized!"]
+         [:div {:style {:color :red}} "Not Yet Authorized"])
+       
        ;; Ajax Troubleshooting
        [:div
         [:button {:on-click (fn [evt] (rf/dispatch [:color/query])) }
