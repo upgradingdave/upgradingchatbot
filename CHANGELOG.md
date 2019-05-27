@@ -11,26 +11,30 @@
 
 ## Floating emotes
 
-- refactor init code out of setup
 - able to do multiple emotes at same time
-- implement emotes besides HeyGuys
+
+## Followers
+
+- Detect when someone follows and display message. 
 
 ## Chatbot
 
-- Add help for all other commands (we already did !play)
-- And also allow for this syntax: !help !play as well as !help play
 - Tweak the scheduled messages. I'd like several different messages to 
   be broadcasted every few minutes. 
-- Play command - make the download from freesound asynchronous. 
-- By default, limit search results to 30 seconds or less
 - Able to play any mp3 link? (how to filter though?)
+
+- move the simple message type commands out to a config file
+- Add help for all other commands (we already did !play)
+- And also allow for this syntax: !help !play as well as !help play
 - catch exceptions when chatbot client loses connection
 - Setup unit tests?
+- By default, limit search results to 30 seconds or less
+- Play command - make the download from freesound asynchronous. 
 - If needed, refactor code to allow for connecting to multiple channels
 
 ### play!
 
-- make sure input streams are closed
+- make sure input streams are closed (I think this is good, but good to double check)
 
 ## Documentation Site
 
@@ -43,6 +47,18 @@
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
 # Complete
+
+## 2019-05-27 (on stream)
+
+- implemented transit communication between back and front ends
+- emotes from set 0 are bouncing around the screen!
+- !github command
+
+## 2019-05-26 (off stream)
+
+- Used twitch api to grab all images from emote set 0. 
+- updated chatbot to recognize any emote from set 0
+- updated cljs processing animation code to display any emote image
 
 ## 2019-05-24 (off stream)
 

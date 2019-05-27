@@ -18,6 +18,12 @@
 
      :httpkit
      {:port 8081}
+
+     :twitchapi
+     {;; clientid for the "Upgrading Dave Panel" (https://dev.twitch.tv/console)
+      :clientid (decrypt key-file-path
+                         (str "AAAADJlq5n9wwoVZV2I55pjIpP/I3e6J4Mf6xV/4OGvHoZCveQ3"
+                              "JT9bJ9T+UR076abRqsKHnIbUDmFnUcHU="))}
      
      :twitchbot
      {:host "irc.chat.twitch.tv"

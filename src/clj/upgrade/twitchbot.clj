@@ -2,14 +2,19 @@
   (:require [clojure.core.async :as async]
             [instaparse.core :as insta]
             [org.httpkit.server :refer [send!]]
+            [cognitect.transit :as transit]
             [upgrade.common :refer [log]]
             [upgrade.freesound :refer [search-and-play-nth!
                                        play-sound!
                                        players-stop!
                                        play-not-found!]]
             [upgrade.http :refer [ws-clients]]
-            )
-  (:import [net.engio.mbassy.listener Handler]
+            [upgrade.twitch :refer [getEmoteChangeSet!
+                                    emoteSetRegexStr
+                                    default-clientid
+                                    findEmoteImageUrl]])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
+           [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
            [org.kitteh.irc.client.library.event.channel
             ChannelMessageEvent
@@ -22,21 +27,28 @@
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
            ))
 
-(def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome"])
-(def emote-list ["HeyGuys"])
+(def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome" "github"])
 
 ;; Common Messages
 
 ;; "I love when people try out the chatbot. Fine more info here: "
 ;;   "https://github.com/upgradingdave/upgradingchatbot "
 
+(defn github-message []
+  (str "Checkout my github repository for the source code for the "
+       "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
+
 (defn today-message []
-  (str "Today, we're working on adding chat commands and maybe get back into building a Twitch Extension!"))
+  (str (str "Today, we're continuing to work on getting emote icons to"
+            " bounce around the screen whenever emotes are used in the chat")))
 
 (defn chatbot-help-message []
   (str
    "B) The UpgradingChatBot is online and here to help! "
-   "Have fun! Here are the commands: " (apply str (interpose ", " (map (fn [command] (str "!" command)) chatbot-command-list))) ". Try `!help <command>` for more details on each command."))
+   "Have fun! Here are the commands: "
+   (apply str (interpose ", " (map (fn [command] (str "!" command))
+                                   chatbot-command-list)))
+   ". Try `!help <command>` for more details on each command."))
 
 (defn welcome-message
   ([]
@@ -45,7 +57,7 @@
     "Welcome! "
     "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
     "My goal is become a better programmer by exploring my favorite programming "
-    "language Clojure, and meet other programmers like you. "
+    "language Clojure, and meet other programmers. "
     "If you're interested in clojure here's a great site to get started: "
     "https://www.braveclojure.com/"))
   ([username]
@@ -56,8 +68,9 @@
     "be shy. Type !help in the chat for a list of commands and please try them out!")))
 
 (defn command-parser []
-  (str "cmd = " (apply str (interpose " | " (concat chatbot-command-list emote-list))) "\n"
-       "HeyGuys = <\"HeyGuys\"> \n"
+  (str "cmd = "
+       (apply str (interpose " | " chatbot-command-list )) "\n"
+      
        "help = <\"!help\"> | <\"!help\"> <space> "
        (str "(" (apply str (interpose " | " (map (fn [cmd] (str "\"" cmd  "\""))
                                                  chatbot-command-list))) ")") " \n"
@@ -74,6 +87,8 @@
        "today = <\"!today\">\n"
 
        "welcome = <\"!welcome\"> | <\"!welcome\"> <space> <\"@\">username\n"
+
+       "github = <\"!github\"> "
        
        "username= #\"[^\\s]+\"\n"
        "space= #\"\\s+\"\n"
@@ -82,7 +97,7 @@
 (defn freesound-reply [url]
   (str "SingsNote SingsNote SingsNote " url))
 
-(defn handle-channel-message [evt]
+(defn handle-channel-command [evt]
   (let [msg (. evt getMessage)
         ;; server-msg (. (. evt getSource) (getMessage))
         cmd-parser (insta/parser (command-parser))
@@ -101,15 +116,10 @@
       (let  [[_ [command args]] parse-result] 
         (cond
 
-          (= command :HeyGuys)
-          (doseq [ch @ws-clients]
-            (send! ch "HeyGuys"))
-
           (= command :help)
           (cond
             (= args "play")
             (.sendReply evt (str "You can play mp3 sounds from the chat! For example, give this a shot: `!play sipping coffee`. The !play command will search https://freesound.org and will play the first result of the search. In order to play the second search result, for example, you can pass a search index like this: `!play 1 sipping coffee`."))
-
             :else
             (.sendReply evt (chatbot-help-message))
 
@@ -130,6 +140,9 @@
           (if args
             (.sendReply evt (welcome-message (str "@" (second args))))
             (.sendReply evt (welcome-message)))
+
+          (= command :github)
+          (.sendReply evt (github-message))
 
           (= command :play)
           (let [[_ [search-type]] args]
@@ -168,6 +181,28 @@
 
           )))))
 
+(defn transitWrite [msg]
+  (with-open [out (ByteArrayOutputStream. 4096)]
+    (let [writer (transit/writer out :json)]
+      (transit/write writer msg)
+      (.toString out))))
+
+(defn handle-channel-message
+  "Parse messages for things like emotes. commands are handled by a
+  different fn"
+  [evt]
+  (let [msg (. evt getMessage)
+        ;; we call twitch api to build a list of possible emotes
+        emote-change-set (getEmoteChangeSet! default-clientid 0)
+        matcher (re-matcher
+                 (re-pattern (emoteSetRegexStr emote-change-set))
+                 msg)]
+    (if-let [found (re-find matcher)]
+      (doseq [ch @ws-clients]
+        (let [url (findEmoteImageUrl emote-change-set found)]
+          (send! ch (transitWrite {:url url}) 
+                 ))))))
+
 (defn handle-event [evt]
   "Here's the main event handler. This is where we can implement fun stuff"
   (let [event-type (type evt)
@@ -179,7 +214,9 @@
 
       ;; Do stuff when a message was sent to the channel
       (instance? ChannelMessageEvent evt)
-      (handle-channel-message evt)
+      (do
+        (handle-channel-command evt)
+        (handle-channel-message evt))
 
       (instance? ChannelJoinEvent evt)
       (let [username (.getUser evt)
@@ -303,8 +340,15 @@
      twitchbot
      600000 ;; every 10 minutes
      [(welcome-message)
-      (chatbot-help-message)
-      (today-message)])
+      ;;(chatbot-help-message)
+      ;;(today-message)
+      ])
+
+    ;;delay
+    (schedule-repeating-messages
+     twitchbot
+     650000 ;; every 15 minutes
+     [(today-message)])
     
     twitchbot))
 

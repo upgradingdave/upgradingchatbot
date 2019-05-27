@@ -3,7 +3,10 @@
             [day8.re-frame.http-fx]
             [reagent.core :as reagent]
             [re-frame.db :as db]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [cognitect.transit :as transit]))
+
+(def json-reader (transit/reader :json))
 
 ;; TODO move to common ns
 (defn log [msg]
@@ -112,12 +115,9 @@
           (swap! state assoc-in [app-key :frames] frames)))
       )))
 
+;;wink smile https://static-cdn.jtvnw.net/emoticons/v1/11/2.0
 (defn preload []
-  (log "[P5JS] preload")
-
-  ;; preload any images we might need
-  (swap! state assoc-in [app-key :emote]
-         (js/loadImage "https://static-cdn.jtvnw.net/emoticons/v1/30259/2.5")))
+  (log "[P5JS] preload"))
 
 (defn setup []
   (log "[P5JS] setup")
@@ -151,15 +151,16 @@
   WebSocket.onmessage"
   (log "Got a message!")
   (log evt)
-  (let [msg (js->clj (.-data evt))]
-    (cond (= msg "HeyGuys")
-          (do
-            (swap! state assoc-in [app-key :running?] true)
-            (swap! state assoc-in [app-key :frames] 0))
-
-
-          :else
-          (log (str "Websocket handler for: " msg " NOT yet implemented")))))
+  (let [msg (->> evt .-data (transit/read json-reader))
+        url (:url msg)]
+    (do
+      (swap! state assoc-in [app-key :emote] nil)
+      (swap! state assoc-in [app-key :running?] true)
+      (swap! state assoc-in [app-key :frames] 0)
+      ;; TODO
+      (swap! state assoc-in [app-key :emote]
+             ;;(js/loadImage "https://static-cdn.jtvnw.net/emoticons/v1/30259/2.5")
+             (js/loadImage url)))))
 
 (defn make-websocket! [url]
  (log "attempting to connect websocket")

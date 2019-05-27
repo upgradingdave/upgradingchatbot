@@ -1,23 +1,46 @@
 # UpgradingChatBot
 
-Welcome!
+Welcome! This is a chatbot that I developed on my Twitch Stream at
+https://www.twitch.tv/upgradingdave
+
+# Getting started with clojure
+
+In case you're interested in getting started with clojure, please checkout the following links: 
+
+- https://www.braveclojure.com/
+- https://jakegny.gitbooks.io/learning-clojure/content/
+
+# About Dave
+
+I've been a software developer and consultant since around 2001. Over
+the years, I've worked mostly with Java and Javascript and Web
+Technologies, but I've also dabbled with a ton of other languages and
+frameworks including php, perl, ruby, groovy, and haskell.
+
+Out of everything I've learned, there is one language and community
+that has outshined them all ... Clojure! I'm completely fascinated
+with the clojure programming language. And it's safe to say that I've
+learned more about computer science and software development from the
+clojure language and community than from anything else in my career so
+far.
 
 I'm challenging myself to live stream on twitch every Mon/Wed/Fri
-7:30-8:30am EST. I'm fascinated with the clojure programming language
-and I've learned so much from the clojure community.
+7:30-8:30am EST.
 
 If you're interested in clojure, (or any type of programming for that
-matter!), please come hang out and say hey
+matter!), please come hang out and say hi. 
 
 # History
 
 - This Month (May 2019) :: Starting to develop my own clojure(script)
-  twitch chatbot.
+  twitch chatbot. Added a bunch of commands. Wrote a basic Twitch
+  Extension using clojure and clojurescript. Also added 2d animated
+  bouncing emoticons in clojurescript (using processing.js)
 
 - April 2019 :: Dave fumbling thru first live streams and trying to
   get over his fear of public speaking.
 
-# Twitch Chat Bot
+# About the Chat Bot
 
 The Twitch Chat Bot is the first thing I built live on stream. I
 started working on this in April 2019.
@@ -113,5 +136,11 @@ To start a repl:
 - http://dig.ccmixter.org/dig
 
 
+## Awesomeness
 
+- typing game mentioned by @roberttables during @noopkat feed
+https://zty.pe/
 
+## Functional concepts to learn
+- https://stackoverflow.com/questions/8307370/functional-lenses
+- https://wiki.haskell.org/Rank-N_types
