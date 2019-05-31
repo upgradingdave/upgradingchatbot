@@ -39,8 +39,8 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today, we're continuing to work on getting emote icons to"
-            " bounce around the screen whenever emotes are used in the chat")))
+  (str (str "Today I'm working on connecting to twitch api's follower webhook"
+            " so we can welcome new followers when they join live")))
 
 (defn chatbot-help-message []
   (str

@@ -6,9 +6,13 @@
             [clj-time.core :as time]
             [org.httpkit.server :as httpkit :refer [send! with-channel]]
             [ring.util.response :as res]
-            [ring.middleware.json :refer [wrap-json-response]]
+            [ring.middleware.json :refer [wrap-json-response
+                                          wrap-json-body]]
+            [ring.middleware.params :refer [wrap-params]]
             [ring.mock.request :as mock]
-            [upgrade.common :refer [log]]))
+            [upgrade.common :refer [log]]
+            [upgrade.twitchbot :refer [send-message]]
+            ))
 
 (defonce http-state (atom "purple"))
 
@@ -58,6 +62,22 @@
       (res/response "file not found"))
     ))
 
+;; TODO maybe get the unique notification id from twitch (maybe it's in the header?)
+(defn follower-handler
+  "Twitch will send a GET request to this endpoint anytime someone follows me"
+  [{:keys [query-params body] :as request}]
+  (if-let [hub-challenge (get query-params "hub.challenge")]
+    ;; respond to hub challenge
+    (do
+      (log (str "Responding to twitch with challenge: " hub-challenge))
+      (res/response hub-challenge))
+    ;; otherwise, we got a new follower!!
+    (let [new-followers (:data body)]
+      (doseq [follower new-followers]
+        (let [{:keys [followed_at from_id from_name]} follower]
+          (log (str "Got a new Follower: " from_name "!"))))))
+  (res/response "This is a twitch webhook endpoint"))
+
 (defonce ws-clients (atom #{}))
 
 (defn websocket-handler [request]
@@ -69,22 +89,25 @@
         "color/cycle" next-color-handler
         #".+\.html" resources-handler
         #"js/.+" resources-handler
-        "ws" websocket-handler 
+        "ws" websocket-handler
+        "hub/follows" follower-handler
         }])
 
 ;; Access-Control-Allow-Origin
-(defn wrap-extra-headers [handler extra-headers]
+(defn wrap-extra-headers
+  "Ring handler that adds extra headers to every request"
+  [handler extra-headers]
   (fn [request]
     (let [response (handler request)]
          (update-in response [:headers]
                     (fn [headers] (merge headers extra-headers))))))
 
-(def handler
-  (wrap-json-response
-   (wrap-extra-headers
-    (make-handler routes)
-    ;; remove all this for production,
-    ;; but we need it for the developer rig
+;; TODO remove all this for production,
+;; but we need it for the developer rig
+(defn wrap-cors
+  "Ring handler that adds headers to make CORs happy for every request"
+  [handler]
+  (wrap-extra-headers handler
     {"Access-Control-Allow-Origin" "*"
      "Access-Control-Allow-Credentials", "true"
      "Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT"
@@ -93,7 +116,16 @@
                                           "Content-Type, "
                                           "Access-Control-Request-Method, "
                                           "Access-Control-Request-Headers, "
-                                          "Authorization")})))
+                                          "Authorization")}))
+
+(def handler
+  (-> (make-handler routes)
+      (wrap-json-response)
+      (wrap-json-body {:keywords? true :bigdecimals? true})
+      (wrap-params)
+      ;;TODO can remove wrap-cors unless testing in twitch developer rig
+      (wrap-cors)
+      ))
 
 (defn app [req]
   (handler req))

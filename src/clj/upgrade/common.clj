@@ -17,7 +17,10 @@
      :key-file-path key-file-path
 
      :httpkit
-     {:port 8081}
+     {:public-ip (decrypt
+                  key-file-path
+                  "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fkmkr80J1GrP7qnVSXZ4")
+      :port 8081}
 
      :twitchapi
      {;; clientid for the "Upgrading Dave Panel" (https://dev.twitch.tv/console)

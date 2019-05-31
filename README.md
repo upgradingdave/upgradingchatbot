@@ -121,25 +121,27 @@ To start a repl:
 
 1. Open the twitch dashboard
 2. Update the "Going Live" message
-3. Sound to 100% and then set sound to "Multi Output Device" (from
+3. Update the "!today" message
+4. Sound to 100% and then set sound to "Multi Output Device" (from
    iShowU Audio Capture)
-4. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
-5. Set Mic volume in OBS so recording around -20 db (just above green)
-6. Start stream with "Starting Soon" OBS Scene
-7. Setup chat view, and windows, Setup Desktop OBS Scene
-8. Start chatbot
+5. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
+6. Set Mic volume in OBS so recording around -20 db (just above green)
+7. Start stream with "Starting Soon" OBS Scene
+8. Setup chat view, and windows, Setup Desktop OBS Scene
+9. Start chatbot
 
 ## Royalty Free Music
 
 - https://incompetech.com/music/royalty-free/music.html (need to give credit)
 - https://mobygratis.com/catalog
 - http://dig.ccmixter.org/dig
-
+- Thanks to @codephobia https://play.google.com/music/listen?u=0#/pl/AMaBXykLsd-ZNaKyMRXUmmFkuqD_tGt2L0MK5GpTtbeBZ7lYFQoG5ksbHSYRQArXxV7-UwMGbDD2X_NcHVvfa9b_DNXE0SMwaQ%3D%3D
 
 ## Awesomeness
 
-- typing game mentioned by @roberttables during @noopkat feed
-https://zty.pe/
+- Get better at Touch Typing (mentioned by @roberttables during
+  @noopkat feed) https://zty.pe/
+- Which Software License should you use? https://choosealicense.com/
 
 ## Functional concepts to learn
 - https://stackoverflow.com/questions/8307370/functional-lenses
