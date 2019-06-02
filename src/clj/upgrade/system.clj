@@ -1,52 +1,49 @@
 (ns upgrade.system
   (:require [upgrade.common :refer [log get-config]]
             [upgrade.twitchbot :as bot]
-            [upgrade.http :as http]))
-
-;; This namespace contains all the nasty state management code.
+            [upgrade.http :as http]
+            [upgrade.twitch :as twitch]))
 
 (defonce system (atom {}))
 
-(defn start-component-really! [component-kw component start-fn]
-  (let [component (assoc
-                   (start-fn component)
-                   :running? true)]
-    (swap! system assoc component-kw component)))
-
 (defn start-component!
-  "Generic, idempotent function to start a component. If the component
-  was already started, this just returns the system map. If component
-  has never been started then we try to get config and create the
-  component for the first time. If the component is not running, we
-  try to restart it"
-  [component-kw start-fn]
-  (let [component (get @system component-kw)]
-    (if (nil? component)
-      ;; component has never been started, so start it using config
-      (start-component-really! component-kw (get (get-config) component-kw) start-fn)
-
-      ;; component has been started before, check if it's running
-      (if (:running? component)
-        ;; if running, just return it
-        @system
-
-        ;; otherwise, restart component
-        (start-component-really! component-kw component start-fn)))))
+  "Generic, idempotent function to stop a component"
+  [kw start-fn]
+  (swap!
+   system
+   (fn [current]
+     (let [component (get current kw)
+           conf (get-config)]
+       (if (or (nil? component) (not (:running? component)))
+         (assoc current kw
+                ;; this is subtle, but be careful to pass the current system state
+                ;; to component's start method
+                (-> (start-fn (assoc current kw (get conf kw)))
+                    (assoc :running? true)))
+         
+         ;; else
+         current)))))
 
 (defn stop-component!
   "Generic, idempotent function to stop a component"
-  [component-kw stop-fn]
-  (let [component (get @system component-kw)]
-    (if (:running? component)
-      (let [component (assoc
-                       (stop-fn component)
-                       :running? false)]
-        (swap! system assoc component-kw component))
-      ;; if not running, just return it
-      @system)))
+  [kw stop-fn]
+  (swap!
+   system
+   (fn [current]
+     (let [component (get current kw)]
+       (if (:running? component)
+         (assoc current kw
+                (-> (stop-fn current)
+                    (assoc :running? false)))
+         
+         ;; else
+         current)))))
 
-(defn start-twitchbot! []
-  (start-component! :twitchbot bot/start-twitchbot!))
+(defn start-twitchbot!
+  "Start a twitchbot and update httpkit's dependency on twitchbot"
+  []
+  (let [{:keys [twitchbot]} (start-component! :twitchbot bot/start-twitchbot!)]
+    (swap! system assoc-in [:httpkit :twitchbot] twitchbot)))
 
 (defn stop-twitchbot! []
   (stop-component! :twitchbot bot/stop-twitchbot!))
@@ -57,18 +54,16 @@
 (defn stop-httpkit! []
   (stop-component! :httpkit http/stop-httpkit!))
 
-(defn start-system!
-  ([config]
-   (start-twitchbot! config)
-   (start-httpkit! config)))
+(defn start-system! []
+  (start-twitchbot!)
+  (start-httpkit!))
 
-(defn stop-system!
-  ([] (start-system! (get-config)))
-  ([config]
-   (start-twitchbot! config)
-   (start-httpkit! config)))
+(defn stop-system! []
+  (stop-twitchbot!)
+  (stop-httpkit!))
 
 ;; TODO implement command line arg parsing
 (defn -main [& args])
+
 
 

@@ -3,26 +3,29 @@
 - write a helper for reading config from file. add helpers for
   automatically decrypting
 - implement command line parsing for main 
+- able to send multiple args to `log`
+- different log files for errors vs info
 
-## Extensions Backend Service
+## Webhooks (follows)
+
+- display message when someone follows
+- capture follows webhook subscription id and track it in system state
+
+## Extensions Backend Service 
 
 - parse jwt token in backend
 - enable https? (when needed, I'll handle this with apache or nginx)
 
-## Floating emotes
+## Animations 
 
 - able to do multiple emotes at same time
-
-## Followers
-
-- Detect when someone follows and display message. 
+- add animation for new follows
 
 ## Chatbot
 
 - Tweak the scheduled messages. I'd like several different messages to 
   be broadcasted every few minutes. 
 - Able to play any mp3 link? (how to filter though?)
-
 - move the simple message type commands out to a config file
 - Add help for all other commands (we already did !play)
 - And also allow for this syntax: !help !play as well as !help play
@@ -31,10 +34,6 @@
 - By default, limit search results to 30 seconds or less
 - Play command - make the download from freesound asynchronous. 
 - If needed, refactor code to allow for connecting to multiple channels
-
-### play!
-
-- make sure input streams are closed (I think this is good, but good to double check)
 
 ## Documentation Site
 
@@ -47,6 +46,18 @@
 - Write a simple clojure app to replace this list. Maybe use github issues?
 
 # Complete
+
+## 2019-05-31 (off stream)
+
+- refactoring system namespace (better management of state)
+
+## 2019-05-31 (on stream)
+
+- receive notification from twitch webhook whenever new user follows
+
+## 2019-05-29 (on stream)
+
+- able to subscribe to twitch webhook for followers
 
 ## 2019-05-27 (on stream)
 

@@ -8,10 +8,8 @@
                                        play-sound!
                                        players-stop!
                                        play-not-found!]]
-            [upgrade.http :refer [ws-clients]]
-            [upgrade.twitch :refer [getEmoteChangeSet!
+             [upgrade.twitch :refer [getEmoteChangeSet!
                                     emoteSetRegexStr
-                                    default-clientid
                                     findEmoteImageUrl]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [net.engio.mbassy.listener Handler]
@@ -27,12 +25,9 @@
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
            ))
 
+(defonce ws-clients (atom #{}))
+
 (def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome" "github"])
-
-;; Common Messages
-
-;; "I love when people try out the chatbot. Fine more info here: "
-;;   "https://github.com/upgradingdave/upgradingchatbot "
 
 (defn github-message []
   (str "Checkout my github repository for the source code for the "
@@ -190,10 +185,10 @@
 (defn handle-channel-message
   "Parse messages for things like emotes. commands are handled by a
   different fn"
-  [evt]
+  [evt {:keys [clientid]}]
   (let [msg (. evt getMessage)
         ;; we call twitch api to build a list of possible emotes
-        emote-change-set (getEmoteChangeSet! default-clientid 0)
+        emote-change-set (getEmoteChangeSet! clientid 0)
         matcher (re-matcher
                  (re-pattern (emoteSetRegexStr emote-change-set))
                  msg)]
@@ -203,7 +198,7 @@
           (send! ch (transitWrite {:url url}) 
                  ))))))
 
-(defn handle-event [evt]
+(defn handle-event [evt opts]
   "Here's the main event handler. This is where we can implement fun stuff"
   (let [event-type (type evt)
         ;; Seems like class is same as type
@@ -215,20 +210,26 @@
       ;; Do stuff when a message was sent to the channel
       (instance? ChannelMessageEvent evt)
       (do
+        ;; look for commands like !play
         (handle-channel-command evt)
-        (handle-channel-message evt))
+        ;; look for things like emotes
+        (handle-channel-message evt opts))
 
       (instance? ChannelJoinEvent evt)
       (let [username (.getUser evt)
             nick (.getNick username)
             client (.getClient evt)]
-        (log (str nick "just joined!!"))
-        ;; This is working. Next step is to use this information about when people join
-        ;; in a fun way
-        ;; (send-message client
-        ;;               (str "Welcome, " nick
-        ;;                    ", to the stream! Please introduce "
-        ;;                    "yourself and tell us why you're interested in clojure."))
+        ;; (log (str nick "just joined!!"))
+        ;; This actually fires for anyone (even if they don't chat)
+        ;; So, not sure we should do anything because some people like to lurk
+        ;; This is working. Next step is to use this information about
+        ;; when people join in a fun way
+        ;; (send-message
+        ;;   client
+        ;;   channel
+        ;;   (str "Welcome, " nick
+        ;;        ", to the stream! Please introduce "
+        ;;        "yourself and tell us why you're interested in clojure."))
         )
 
       (instance? ChannelPartEvent evt)
@@ -251,51 +252,49 @@
   "Methods for responding to irc events"
   (^{Handler true} listen-for-all-events [this evt] "Listen for any event"))
 
-(deftype IrcEventHanders []
+(deftype IrcEventHanders [opts]
   IrcListeners
   (^{Handler true}   
-   listen-for-all-events [this evt] (handle-event evt)))
+   listen-for-all-events [this evt] (handle-event evt opts)))
 
-(defn add-listeners [client]
+(defn add-listeners [client opts]
   (let [evt-mgr (. client (getEventManager))]
-    (. evt-mgr (registerEventListener (IrcEventHanders.)))))
+    (. evt-mgr (registerEventListener (IrcEventHanders. opts)))))
 
 (defn send-message
-  ([{client :client channel :channel :as twitchbot} message]
-   (. client (sendMessage channel message))))
+  [client channel message]
+  (. client (sendMessage channel message)))
 
 (defn leave-and-disconnect
-  [{client :client channel :channel :as twitchbot}]
+  [client channel]
   (. client (removeChannel channel "Later alligators"))
   (. client (shutdown "UpgradingChatBot is shutting down")))
 
 (defn send-message-in-future
-  [twitchbot client millis message]
+  [client channel message millis]
   (async/go
     (let [_ (async/alts! [(async/timeout millis)])]
-      (send-message twitchbot message))))
-
-;; TODO Do we make this part of the component?
-(defonce continue-repeating-messages? (atom true))
+      (send-message client channel message))))
 
 (defn schedule-repeating-messages
-  [{client :client :as twitchbot} millis messages]
-  (reset! continue-repeating-messages? true)
-  (async/go
-    (loop [t (async/timeout millis)]
-      (let [_ (async/alts! [t])]
-        (if @continue-repeating-messages?
-          (do
-            (doseq [m messages]
-              (send-message twitchbot m))
-            (recur (async/timeout millis))))))))
+  "This will return function that can be used to stop the repeating
+  messages"
+  [client channel messages millis]
+  (let [continue-repeating-messages? (atom true)]
+    (async/go
+      (loop [t (async/timeout millis)]
+        (let [_ (async/alts! [t])]
+          (if @continue-repeating-messages?
+            (do
+              (doseq [m messages] (send-message client channel m))
+              (recur (async/timeout millis)))))))
+    (fn []
+      (reset! continue-repeating-messages? false))))
 
-(defn stop-messages []
-  (reset! continue-repeating-messages? false))
-
-(defn create-chatbot [host port username oauth]
+(defn create-chatbot!
   "Creates an chatbot client object that can be used later to connect
   and listen to channels"
+  [host port username oauth]
   (let [client (.. (Client/builder)
                    (server)
                    (host host)
@@ -308,9 +307,11 @@
     ;;(.getExceptionListener client)
     (TwitchSupport/addSupport client)))
 
-(defn connect-and-add-channel [client channel]
+(defn connect-and-add-channel!
   "Connect and start listening to channels"
-  (add-listeners client)
+  [client channel opts]
+
+  (add-listeners client opts)
 
   (. client (connect))
   (. client addChannel (into-array String [channel]))
@@ -318,42 +319,38 @@
   client)
 
 (defn start-twitchbot!
-  [{host :host
-    port :port
-    username :username
-    oauth :oauth
-    channel :channel
-    :as twitchbot}]
-  (log "Attempting to start twitch chat bot ...")
-  (let [client (create-chatbot host port username oauth)
+  [{:keys [twitchbot twitchapi] :as system}]
+  (let [{:keys [host port username oauth channel]} twitchbot
+        {:keys [clientid]} twitchapi
+        client (create-chatbot! host port username oauth)
         ;; oauth is no longer needed, so let's get rid of it
         twitchbot (assoc twitchbot
                          :oauth nil
-                         :client (connect-and-add-channel client channel)
+                         :client (connect-and-add-channel! client channel
+                                                           {:clientid clientid})
                          :running? true)]
-
+    
     ;; now we have a fully started twichbot
-    (send-message twitchbot "UpgradingChatBot is ALIVE")
+    (send-message client channel "UpgradingChatBot is ALIVE")
 
     ;; setup scheduled messages
-    (schedule-repeating-messages
-     twitchbot
-     600000 ;; every 10 minutes
-     [(welcome-message)
-      ;;(chatbot-help-message)
-      ;;(today-message)
-      ])
+    (schedule-repeating-messages client channel
+                                 [(welcome-message)
+                                  ;;(chatbot-help-message)
+                                  ;;(today-message)
+                                  ]     
+                                 600000 ;; every 10 minutes
+                                 )
 
-    ;;delay
-    (schedule-repeating-messages
-     twitchbot
-     650000 ;; every 15 minutes
-     [(today-message)])
-    
+    (schedule-repeating-messages client channel [(today-message)]
+                                 650000 ;; every 15 minutes
+                                 )
+
     twitchbot))
 
-(defn stop-twitchbot! [twitchbot]
-  (log "Attempting to stop twitch chat bot ...")
-  (leave-and-disconnect twitchbot)
-  (assoc twitchbot :running? false))
+(defn stop-twitchbot! [{:keys [twitchbot] :as system}]
+  (let [{:keys [client channel]} twitchbot]
+    (log "Attempting to stop twitch chat bot ...")
+    (leave-and-disconnect client channel)
+    twitchbot))
 

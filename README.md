@@ -1,57 +1,52 @@
 # UpgradingChatBot
 
-Welcome! This is a chatbot that I developed on my Twitch Stream at
-https://www.twitch.tv/upgradingdave
+Welcome! This is a chatbot that I developed live on my Twitch Stream
+at https://www.twitch.tv/upgradingdave
 
 # Getting started with clojure
 
-In case you're interested in getting started with clojure, please checkout the following links: 
+In case you're interested in getting started with clojure, please
+checkout the following links:
 
 - https://www.braveclojure.com/
 - https://jakegny.gitbooks.io/learning-clojure/content/
 
-# About Dave
+# What does this do?
 
-I've been a software developer and consultant since around 2001. Over
-the years, I've worked mostly with Java and Javascript and Web
-Technologies, but I've also dabbled with a ton of other languages and
-frameworks including php, perl, ruby, groovy, and haskell.
+This Twitch Chat Bot is the first thing I built live on stream. I
+started working on this in April 2019 and will probably be adding to
+it and updating it for a long time. If you have ideas for new
+features, please stop by my livestream and let me know.
 
-Out of everything I've learned, there is one language and community
-that has outshined them all ... Clojure! I'm completely fascinated
-with the clojure programming language. And it's safe to say that I've
-learned more about computer science and software development from the
-clojure language and community than from anything else in my career so
-far.
+There are a few main pieces that make up this chatbot. 
 
-I'm challenging myself to live stream on twitch every Mon/Wed/Fri
-7:30-8:30am EST.
+1. IRC Bot
 
-If you're interested in clojure, (or any type of programming for that
-matter!), please come hang out and say hi. 
+I'm using a java library called the Kitteh IRC Client Library
+(KICL). KICL will raise events whenever there's any activity in an irc
+chat. This bot looks at each message and can react as needed. 
 
-# History
+2. Http Server
 
-- This Month (May 2019) :: Starting to develop my own clojure(script)
-  twitch chatbot. Added a bunch of commands. Wrote a basic Twitch
-  Extension using clojure and clojurescript. Also added 2d animated
-  bouncing emoticons in clojurescript (using processing.js)
+I'm using a clojure library called httpkit to handle http
+requests. The Http server listens for webhook requests from Twitch
+(for example whenever there's a new follower).
 
-- April 2019 :: Dave fumbling thru first live streams and trying to
-  get over his fear of public speaking.
+3. Clojurescript / Javascript Web Pages and Animations
 
-# About the Chat Bot
+The Http Server also hosts several web pages that use clojurescript
+and javascript libraries to run animations and other fun stuff. The
+irc code can communicate with these pages via websockets.
 
-The Twitch Chat Bot is the first thing I built live on stream. I
-started working on this in April 2019.
+4. Twitch Extension
 
-I love when people come by and play around with the chatbot. You get
-double points if you can break it. Please come by and try out some of
-the commands below during a livestream!
+I've started to implement a twitch extention, but so far it doesnt do
+much and I'm not using it yet.
 
-I'm always on the lookout for suggestions and ideas for fun new
-features to add next. Checkout the CHANGELOG.md for a running list
-of ideas I might add soon.
+5. Twitch api
+
+I'm using the v5 and new Twitch API to do things like find emoteicon
+images, listen for new followers, etc.
 
 ## Emote Floating Bouncing Heads 
 
@@ -77,7 +72,10 @@ Here's a (probably outdated) list of commands:
 - !welcome <username>
 - !today
 
-# !play
+### !play
+
+Currently, the `play` command will search `http://freesound.org` and
+if it find a result, it will play the sound during the stream.
 
 - !play car crash
 - (car crash) !play 237375
@@ -100,22 +98,52 @@ Here's a (probably outdated) list of commands:
 - Gold !play 161315
 - Russian Festival !play 468218
 
-## Development
+# History
+
+- June 2019 :: The goals for this month is to have animation play when
+  new followers follow me and/or new subscribers subscribe. I'd also
+  like to implement my own web version of the chat to display as an
+  overlay.
+  
+- May 2019 :: Starting to develop my own clojure(script)
+  twitch chatbot. Added a bunch of commands. Wrote a basic Twitch
+  Extension using clojure and clojurescript. Also added 2d animated
+  bouncing emoticons in clojurescript (using processing.js)
+
+- April 2019 :: Dave fumbling thru first live streams and trying to
+  get over his fear of public speaking.
+
+# Development
 
 This is an IRC Chatbot for Twitch written in clojure based on the Java
 Kitteh IRC Client Library (KICL). 
 
-To start it up, run: 
-
-```
-./scripts/run.sh
-```
-
-To start a repl: 
+To use it, start a repl like this: 
 
 ```
 ./scripts/repl.sh
 ```
+
+And then start things up like this: 
+
+```
+(ns upgrade.system)
+(start-twitchbot!)
+(start-httpkit!)
+```
+
+# My Twitch Live Stream
+
+Out of everything I've learned over my career, nothing has had a
+bigger impact on the way I program (and even the way I think about
+problems) than Clojure and functional programming. I'm completely
+fascinated with the clojure programming language. 
+
+I'm challenging myself to live stream on twitch every Mon/Wed/Fri
+7:30-8:30am EST for year. 
+
+If you're interested in clojure, (or any type of programming for that
+matter!), please come hang out and say hi. 
 
 ## Streaming Notes
 

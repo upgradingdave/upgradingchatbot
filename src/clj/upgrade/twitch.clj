@@ -1,28 +1,21 @@
 (ns upgrade.twitch
   (:require [cheshire.core :refer [parse-string generate-string]]
             [org.httpkit.client :as http]
-            [upgrade.common :refer [get-config log]]
-            ))
-
-(def default-clientid (get-in (get-config) [:twitchapi :clientid]))
-(def public-ip-address (get-in (get-config) [:httpkit :public-ip]))
-(def twitch-api-url "https://api.twitch.tv/kraken")
-(def twitch-emote-url "https://static-cdn.jtvnw.net/emoticons/v1")
-(def twitch-followers-callback-url (str "http://" public-ip-address
-                                        ":8081/hub/follows"))
-(def my-twitch-user-id "267319958")
+            [upgrade.common :refer [get-config
+                                    log
+                                    routes
+                                    twitch-followers-callback-url]]))
 
 ;; This doesn't work anymore I guess?
 ;;https://api.twitch.tv/kraken/chat/emoticons&client_id=xxx
 ;;https://api.twitch.tv/v5/chat/emoticons&client_id=xxx
-
 ;; https://api.twitch.tv/kraken/chat/emoticon_images?emotesets=46&client_id=xxx
 (defn getEmoteChangeSet!
   "Makes a http GET request to the twitch v5 api to get code's and
   id's of emotes inside a emote set. Returns a list of maps of :id and :code"
   [clientid emotesetid]
   (let [options (:timeout 200)
-        url (str twitch-api-url "/chat/emoticon_images"
+        url (str "https://api.twitch.tv/kraken" "/chat/emoticon_images"
                  "?emotesets=" emotesetid
                  "&client_id=" clientid)
         {:keys [status headers body error]} @(http/get url)]
@@ -47,9 +40,9 @@
   ;;Valid size can be 0.0 - 3.0
   ([emote-change-set emote-code size]
    (let [result (searchEmoteChangeSet emote-change-set emote-code)]
-     (str twitch-emote-url "/" (:id result) "/" size ))))
+     (str "https://static-cdn.jtvnw.net/emoticons/v1/"
+          (:id result) "/" size ))))
 
-;;(re-find (re-pattern (emoteSetRegex (drop 100 set0))) "This is a HeyGuys")
 (defn emoteSetRegexStr
   "Return a regex that can be used to see if string contains emotes"
   [emote-change-set]
@@ -57,6 +50,30 @@
               "|"
               (map (fn [n] (java.util.regex.Pattern/quote (:code n)))
                    emote-change-set))))
+
+(defn get-app-access-token
+  "Do the oauth handshake to get an app access token. This retuns a
+  datastructure like this:
+
+  {:access_token \"xxx\",
+   :expires_in 5685328,
+   :token_type \"bearer\"}
+
+  "
+  [twitch-client-id twitch-client-secret]
+  (let [options {}
+        url (str "https://id.twitch.tv/oauth2/token"
+                 "?client_id=" twitch-client-id
+                 "&client_secret=" twitch-client-secret
+                 "&grant_type=client_credentials"
+                 ;; "&scope=analytics:read:extensions+analytics:read:games"
+                 ;; "+bits:read+channel:read:subscriptions+clips:edit"
+                 ;; "+user:edit+user:edit:broadcast+user:read:broadcast"
+                 ;; "+user:read:email"
+                 ) 
+        {:keys [status headers body error] :as response} @(http/post url options)]
+    (let [result (parse-string body true)]
+      result)))
 
 (defn get-twitch-user-info
   "Get information about a twitch user"
@@ -70,9 +87,9 @@
       (first
        (:data result)))))
 
-;; my user id "267319958"
-;; returns data structure that contains {:total <total follows>, :data <list>}
-(defn get-twitch-followers [twitch-client-id followed-id]
+(defn get-twitch-followers
+  "returns data structure that contains `{:total <total follows>, :data <list>}`"
+  [twitch-client-id followed-id]
   (let [options {:timeout 200 ;;ms
                  :headers {"Client-ID" twitch-client-id
                            "Content-Type" "application/json"}}
@@ -81,42 +98,60 @@
     (let [result (parse-string body true)]
       result)))
 
-(defn webhook-subscribe-followers
-  "This function subscribes so that each time a twitch user with `to-id`
-  is the followed, Twitch will send a GET request to the
-  `callback-url`.  `twitch-app-client-id` is the id you get when you
-  create a Twitch App."
-  [twitch-client-id to-id callback-url seconds]
-  (let [body (generate-string
-              {:hub.callback callback-url
-               :hub.mode "subscribe"
-               :hub.topic (str "https://api.twitch.tv/helix/users/follows?"
-                               "first=1&to_id=" to-id)
-               :hub.lease_seconds seconds
-               ;; TODO pass hub.secret
-               ;;:hub.secret ""
-               })
+(defn get-webhook-subscriptions
+  "Returns information about which webhooks I'm currently subscribing to"
+  [twitch-client-id twitch-app-token]
+  (let [options {:timeout 200 ;;ms
+                 :headers {"Client-ID" twitch-client-id
+                           "Authorization" (str "Bearer " twitch-app-token)
+                           "Content-Type" "application/json"}}
+        url (str  "https://api.twitch.tv/helix/webhooks/subscriptions") 
+        {:keys [status headers body error]} @(http/get url options)]
+    (let [result (parse-string body true)]
+      result)))
+
+(defn follows-webhook
+  "This function subscribes (or unsubscribes) so that each time a twitch
+  user with `to-id` is the followed, Twitch will send a GET request to
+  the `callback-url`.  `twitch-app-client-id` is the id you get when
+  you create a Twitch App."
+  [twitch-client-id to-id callback-url seconds subscribe?]
+  (let [hub-topic (str "https://api.twitch.tv/helix/users/follows?"
+                       "first=1&to_id=" to-id)
+        req-body (generate-string
+                  {:hub.callback callback-url
+                   :hub.mode (if subscribe? "subscribe" "unsubscribe")
+                   :hub.topic hub-topic
+                   :hub.lease_seconds seconds
+                   ;; TODO pass hub.secret
+                   ;;:hub.secret ""
+                   })
         options {:timeout 200 ;;ms
                  :headers {"Client-ID" twitch-client-id
                            "Content-Type" "application/json"}
-                 :body body}
+                 :body req-body}
         url "https://api.twitch.tv/helix/webhooks/hub"
         {:keys [status headers body error] :as result} @(http/post url options)]
-    (if (and (> status 200) (< status 300))
-      (log "Subscription request sent successfully")
-      (do
-        (log "Hmm, error when attempting subscription")
-        (log result)))))
+    (log req-body)
+    (log status)
+    ;; (if (and (> status 200) (< status 300))
+    ;;   (log (str "Successfully requested Subscription: " body) )
+    ;;   (do
+    ;;     (log "Hmm, error when attempting subscription")
+    ;;     (log result)))
+    ))
+
+(defn subscribe-to-follows [twitch-client-id to-id callback-url seconds]
+  (follows-webhook twitch-client-id to-id callback-url seconds true))
+
+(defn unsubscribe-to-follows [twitch-client-id to-id callback-url seconds]
+  (follows-webhook twitch-client-id to-id callback-url seconds false))
 
 (comment
   (def conf (get-config))
   (def clientid (get-in conf [:twitchapi :clientid]))
-  (getEmoteChangeSet clientid 0)
-
-  ;; follows
-  @(http/get (str options) )
-
-  ;; user information
-
-
-  )
+  (def client-secret (get-in conf [:twitchapi :client-secret]))
+  (def app-token (get-in conf [:twitchapi :app-token-results :access_token]))
+  (def follow-user-id (get-in conf [:twitchapi :follow-user-id]))
+  (def followers-callback-url (get-in conf [:twitchapi :followers-callback-url]))
+  (getEmoteChangeSet clientid 0))
