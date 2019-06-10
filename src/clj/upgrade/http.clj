@@ -91,12 +91,15 @@
                 {:keys [client channel]} (get-in @http-state [:twitchbot])]
             (log from_name)
             (when from_name
-              (log (str "Got a new Follower! Username: " from_name)))
-
-            (when client
-              (send-message client channel
-                            (str "Welcome, " from_name "! Thanks for following!!!")))
-            ))
+              (do
+                (doseq [ch @ws-clients]
+                  (send! ch (transitWrite {:follower from_name})))
+                (when client
+                  (send-message
+                   client channel
+                   (str "Welcome, " from_name "! Thanks for following!!!")))
+                (log (str "Got a new Follower! Username: " from_name))))))
+        
         ;; send 200 response to twitch
         (res/response "Thanks, Twitch!"))
 
@@ -172,10 +175,12 @@
                 subscribe-time-in-seconds]} twitchapi]
     (swap! http-state assoc :twitchbot twitchbot)
 
-    (subscribe-to-follows clientid follow-user-id followers-callback-url
-                          subscribe-time-in-seconds)
+    (let [server (run-server port)]
 
-    (assoc httpkit :server (run-server port))))
+      (subscribe-to-follows clientid follow-user-id followers-callback-url
+                            subscribe-time-in-seconds)
+
+      (assoc httpkit :server server))))
 
 ;; TODO: remove webhook subscription id to system state
 (defn stop-httpkit! [{:keys [httpkit twitchapi] :as system}]

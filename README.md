@@ -93,6 +93,8 @@ if it find a result, it will play the sound during the stream.
 - !play timber
 - !play jet
 - !play 1 underwater
+- !play 368024 video game
+- !play 345619 whats up baby
 
 - Stand firm !play 397298
 - Gold !play 161315

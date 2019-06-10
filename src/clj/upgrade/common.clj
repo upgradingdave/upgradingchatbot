@@ -1,6 +1,8 @@
 (ns upgrade.common
-  (:require [bidi.bidi :refer [match-route path-for]])
-  (:import [upgrade.encrypt EncryptionManager]))
+  (:require [bidi.bidi :refer [match-route path-for]]
+            [cognitect.transit :as transit])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
+           [upgrade.encrypt EncryptionManager]))
 
 (defn encrypt
   [key-file-path message]
@@ -33,7 +35,11 @@
   {:protocol "http"
    :public-ip (decrypt
                key-file-path
-               "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fkmkr80J1GrP7qnVSXZ4")
+               ;; Bungalow
+               "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKOHrFT3TUJJgj4OsFWkTWA=="
+               ;; Home
+               ;;"AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fkmkr80J1GrP7qnVSXZ4"
+               )
    :port 8081})
 
 (def http-base-url 
@@ -84,3 +90,8 @@
   ([path-to-file msg]
    (spit path-to-file (str msg "\n") :append true)))
 
+(defn transitWrite [msg]
+  (with-open [out (ByteArrayOutputStream. 4096)]
+    (let [writer (transit/writer out :json)]
+      (transit/write writer msg)
+      (.toString out))))

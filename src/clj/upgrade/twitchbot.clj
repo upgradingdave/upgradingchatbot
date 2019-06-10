@@ -3,14 +3,14 @@
             [instaparse.core :as insta]
             [org.httpkit.server :refer [send!]]
             [cognitect.transit :as transit]
-            [upgrade.common :refer [log]]
+            [upgrade.common :refer [log transitWrite]]
             [upgrade.freesound :refer [search-and-play-nth!
                                        play-sound!
                                        players-stop!
                                        play-not-found!]]
              [upgrade.twitch :refer [getEmoteChangeSet!
                                     emoteSetRegexStr
-                                    findEmoteImageUrl]])
+                                     findEmoteImageUrl]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [net.engio.mbassy.listener Handler]
            [org.kitteh.irc.client.library Client]
@@ -34,8 +34,8 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm working on connecting to twitch api's follower webhook"
-            " so we can welcome new followers when they join live")))
+  (str (str "Today I'm working on a displaying a animated gif and
+  playing a sound to welcome new followers to the channel.")))
 
 (defn chatbot-help-message []
   (str
@@ -176,12 +176,6 @@
 
           )))))
 
-(defn transitWrite [msg]
-  (with-open [out (ByteArrayOutputStream. 4096)]
-    (let [writer (transit/writer out :json)]
-      (transit/write writer msg)
-      (.toString out))))
-
 (defn handle-channel-message
   "Parse messages for things like emotes. commands are handled by a
   different fn"
@@ -195,8 +189,8 @@
     (if-let [found (re-find matcher)]
       (doseq [ch @ws-clients]
         (let [url (findEmoteImageUrl emote-change-set found)]
-          (send! ch (transitWrite {:url url}) 
-                 ))))))
+          (send! ch (transitWrite {:url url})))))
+    ))
 
 (defn handle-event [evt opts]
   "Here's the main event handler. This is where we can implement fun stuff"
@@ -334,17 +328,16 @@
     (send-message client channel "UpgradingChatBot is ALIVE")
 
     ;; setup scheduled messages
-    (schedule-repeating-messages client channel
-                                 [(welcome-message)
-                                  ;;(chatbot-help-message)
-                                  ;;(today-message)
-                                  ]     
-                                 600000 ;; every 10 minutes
-                                 )
+    ;; TODO: implement the ability to stagger these (with offset)
+    ;;600000 ;; every 10 minutes
+    ;;900000 ;; every 15 minutes
+    ;;1200000 ;; every 20 minutes
+    ;;2100000 ;; every 35 minutes
+    (schedule-repeating-messages client channel [(welcome-message)] 1200000)
 
-    (schedule-repeating-messages client channel [(today-message)]
-                                 650000 ;; every 15 minutes
-                                 )
+    (schedule-repeating-messages client channel [(today-message)] 900000)
+
+    (schedule-repeating-messages client channel [(github-message)] 21000000)
 
     twitchbot))
 

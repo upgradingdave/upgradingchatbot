@@ -10,6 +10,32 @@
 ;;https://api.twitch.tv/kraken/chat/emoticons&client_id=xxx
 ;;https://api.twitch.tv/v5/chat/emoticons&client_id=xxx
 ;; https://api.twitch.tv/kraken/chat/emoticon_images?emotesets=46&client_id=xxx
+
+;; better way to find emoticons??
+;;https://twitchemotes.com/api_cache/v3/subscriber.json
+
+(defn getEmoteChangeSetLookup []
+  (let [options (:timeout 200)
+        url (str "https://twitchemotes.com/api_cache/v3/subscriber.json")
+        {:keys [status headers body error]} @(http/get url)]
+    (if error
+      {:error error}
+      ;; on success
+      (let [result (parse-string body true)]
+        result))))
+
+(defn getEmotesForChannel [channel-id]
+  ;;GET https://api.twitch.tv/kraken/chat/<channel ID>/badges
+  (let [options (:timeout 200)
+        url (str "https://api.twitch.tv/kraken/chat/" channel-id "/badges"
+                 "?client_id=" clientid)
+        {:keys [status headers body error]} @(http/get url)]
+    (if error
+      {:error error}
+      ;; on success
+      (let [result (parse-string body true)]
+        result))))
+
 (defn getEmoteChangeSet!
   "Makes a http GET request to the twitch v5 api to get code's and
   id's of emotes inside a emote set. Returns a list of maps of :id and :code"
@@ -132,8 +158,8 @@
                  :body req-body}
         url "https://api.twitch.tv/helix/webhooks/hub"
         {:keys [status headers body error] :as result} @(http/post url options)]
-    (log req-body)
-    (log status)
+    (log (str "TWITCH WEBHOOK FOLLOWS: " req-body))
+    (log (str "TWITCH WEBHOOK FOLLOWS: " status))
     ;; (if (and (> status 200) (< status 300))
     ;;   (log (str "Successfully requested Subscription: " body) )
     ;;   (do
