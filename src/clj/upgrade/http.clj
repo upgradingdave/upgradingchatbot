@@ -10,10 +10,14 @@
                                           wrap-json-body]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.mock.request :as mock]
-            [upgrade.common :refer [log routes]]
+            [upgrade.common :refer [log routes transitWrite]]
+            [upgrade.freesound :refer [play-sound!]]            
             [upgrade.twitchbot :refer [send-message ws-clients]]
-            [upgrade.twitch :refer [subscribe-to-follows
-                                    unsubscribe-to-follows]]
+            [upgrade.twitch :refer [active-follower-subscription?
+                                    get-webhook-subscriptions
+                                    subscribe-to-follows
+                                    unsubscribe-to-follows
+]]
             ))
 
 (defonce http-state (atom {:color "purple"
@@ -64,7 +68,19 @@
       (res/response "file not found"))
     ))
 
-;; TODO maybe get the unique notification id from twitch (maybe it's in the header?)
+(defn play-follower-animation [client channel from_name]
+  (play-sound! 468218)
+  
+  (doseq [ch @ws-clients]
+    (send! ch (transitWrite {:animation-key :followers
+                             :follower from_name})))
+  (when client
+    (send-message
+     client channel
+     (str "Welcome, " from_name "! Thanks for following!!!"))))
+
+;; TODO maybe get the unique notification id from twitch (maybe it's
+;; in the header?)
 (defn follower-handler
   "This is used for 2 purposes: 1. Twitch will send a challenge when we
   first subscribe to follower webhook, so we need to respond with
@@ -73,38 +89,39 @@
   response."
   [{:keys [query-params body] :as request}]
   (log "Processing 'hub/follows' request ...")
-  (if-let [hub-challenge (get query-params "hub.challenge")]
 
-    ;; this is the first subscription challenge,  respond to hub challenge
-    (do
-      (log (str "Responding to twitch with challenge: " hub-challenge))
-      (res/response hub-challenge))
+  (let [hub-challenge (get query-params "hub.challenge")
+        new-followers (:data body)]
 
-    ;; else, either wewe got a new follower, or someone is just browsing this url
-    (if-let [new-followers (:data body)]
+    (cond
 
+      ;; this is the first subscription challenge, respond to hub
+      ;; challenge
+      hub-challenge
       (do
-        (log new-followers)
+        (log (str "Responding to twitch with challenge: " hub-challenge))
+        (res/response hub-challenge))
+
+      ;; we got a new follower    
+      new-followers
+      (do
+        ;; (log new-followers)
         (doseq [follower new-followers]
-          (log follower)
+          ;; (log follower)
           (let [{:keys [followed_at from_id from_name]} follower
-                {:keys [client channel]} (get-in @http-state [:twitchbot])]
-            (log from_name)
+                {:keys [client channel]} (get-in @http-state
+                                                 [:twitchbot])]
             (when from_name
-              (do
-                (doseq [ch @ws-clients]
-                  (send! ch (transitWrite {:follower from_name})))
-                (when client
-                  (send-message
-                   client channel
-                   (str "Welcome, " from_name "! Thanks for following!!!")))
-                (log (str "Got a new Follower! Username: " from_name))))))
+              (play-follower-animation client channel from_name)
+              (log (str "Got a new Follower! Username: " from_name)))))
         
         ;; send 200 response to twitch
         (res/response "Thanks, Twitch!"))
 
+
       ;; This is just some nincompoop browsing this endpoint
-      (res/response "Twitch webhook endpoint is up"))))
+      :else
+      (res/response "Twitch webhook endpoint is up!"))))
 
 (defn websocket-handler [request]
   (with-channel request channel
@@ -172,13 +189,22 @@
         {:keys [clientid
                 follow-user-id
                 followers-callback-url
-                subscribe-time-in-seconds]} twitchapi]
+                subscribe-time-in-seconds
+                app-token-results]} twitchapi
+        app-token (:access_token app-token-results)]
     (swap! http-state assoc :twitchbot twitchbot)
 
-    (let [server (run-server port)]
+    (let [server (run-server port)
+          ;; check if we have an active follower subscription
+          result (get-webhook-subscriptions clientid app-token)
+          subscribed? (active-follower-subscription?
+                        follow-user-id result)]
 
-      (subscribe-to-follows clientid follow-user-id followers-callback-url
-                            subscribe-time-in-seconds)
+      (if-not subscribed?
+        (subscribe-to-follows clientid
+                              follow-user-id
+                              followers-callback-url
+                              subscribe-time-in-seconds))
 
       (assoc httpkit :server server))))
 
@@ -203,3 +229,12 @@
       ;; graceful shutdown: wait 100ms for existing requests to be finished
       ;; :timeout is optional, when no timeout, stop immediately
       (assoc httpkit :server (server :timeout 100)))))
+
+
+(comment
+
+  (def conf (get-config))
+  (def clientid (get-in conf [:twitchapi :clientid]))
+  (def channel (get-in conf [:twitchbot :channel]))
+
+  )

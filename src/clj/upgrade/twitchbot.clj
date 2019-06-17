@@ -27,15 +27,15 @@
 
 (defonce ws-clients (atom #{}))
 
-(def chatbot-command-list ["play" "stop" "help" "so" "today" "welcome" "github"])
+(def chatbot-command-list ["play" "stop" "help"
+                           "so" "today" "welcome" "github"])
 
 (defn github-message []
   (str "Checkout my github repository for the source code for the "
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm working on a displaying a animated gif and
-  playing a sound to welcome new followers to the channel.")))
+  (str (str "Today I'm working on the clojurescript (cljs) that displays animations when a new follower follows the channel. I'm not very good at css, so bear with me!")))
 
 (defn chatbot-help-message []
   (str
@@ -189,7 +189,8 @@
     (if-let [found (re-find matcher)]
       (doseq [ch @ws-clients]
         (let [url (findEmoteImageUrl emote-change-set found)]
-          (send! ch (transitWrite {:url url})))))
+          (send! ch (transitWrite {:animation-key :emoticons
+                                   :url url})))))
     ))
 
 (defn handle-event [evt opts]
@@ -230,10 +231,13 @@
       (let [username (.getUser evt)
             nick (.getNick username)
             client (.getClient evt)]
-        (log (str nick " just left!!")))
+        ;;(log (str nick " just left!!"))
+        )
 
       (instance? ClientReceiveCommandEvent evt)
-      (log (str "Received: ClientRecieveCommandEvent"))
+      (let []
+        (log (str "ClientRecieveCommandEvent"))
+        (log evt))
       
       :else
       (log (str "NEED IMPLEMENTATION FOR: " event-type))
@@ -344,6 +348,9 @@
 (defn stop-twitchbot! [{:keys [twitchbot] :as system}]
   (let [{:keys [client channel]} twitchbot]
     (log "Attempting to stop twitch chat bot ...")
-    (leave-and-disconnect client channel)
-    twitchbot))
+    (log client)
+    (log channel)
+    ;;(leave-and-disconnect client channel)
+    ;;twitchbot
+    ))
 

@@ -16,9 +16,20 @@
            conf (get-config)]
        (if (or (nil? component) (not (:running? component)))
          (assoc current kw
-                ;; this is subtle, but be careful to pass the current system state
-                ;; to component's start method
-                (-> (start-fn (assoc current kw (get conf kw)))
+                ;; here be dragons!!! (This was tricky to get right!)
+                ;; We want to build a map of current state + any
+                ;; config that has not yet been loaded.  start-fn will
+                ;; return updated state for this specific component
+
+                ;; Sensitive config data is encrypted at rest. When
+                ;; it's read by get-config, it's decrypted and might
+                ;; be easy to mistakenly show on stream. So,
+                ;; `start-fn`'s can (and should) remove sensitive
+                ;; stuff (like passwords) from the specific component
+                ;; state. This way sensitive data can't ever be seen
+                ;; on stream!
+
+                (-> (start-fn (merge current conf))
                     (assoc :running? true)))
          
          ;; else
@@ -30,10 +41,11 @@
   (swap!
    system
    (fn [current]
-     (let [component (get current kw)]
+     (let [component (get current kw)
+           conf (get-config)]
        (if (:running? component)
          (assoc current kw
-                (-> (stop-fn current)
+                (-> (stop-fn (merge current conf))
                     (assoc :running? false)))
          
          ;; else

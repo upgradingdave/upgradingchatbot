@@ -10,3 +10,5 @@ mp3/
 resources/public/js/out/
 resources/public/js/twitch.js
 resources/public/js/emoticons.js
+resources/public/js/followers.js
+target/

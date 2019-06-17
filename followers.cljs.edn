@@ -1,0 +1,4 @@
+{:main upgrade.followers
+ :output-to "resources/public/js/followers.js"
+ :output-dir "resources/public/js/out"
+ }

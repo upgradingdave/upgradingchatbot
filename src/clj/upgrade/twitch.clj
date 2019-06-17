@@ -24,7 +24,7 @@
       (let [result (parse-string body true)]
         result))))
 
-(defn getEmotesForChannel [channel-id]
+(defn getEmotesForChannel [clientid channel-id]
   ;;GET https://api.twitch.tv/kraken/chat/<channel ID>/badges
   (let [options (:timeout 200)
         url (str "https://api.twitch.tv/kraken/chat/" channel-id "/badges"
@@ -136,14 +136,17 @@
     (let [result (parse-string body true)]
       result)))
 
+(defn follower-subscription-topic-url [to-id]
+  (str "https://api.twitch.tv/helix/users/follows?"
+       "first=1&to_id=" to-id))
+
 (defn follows-webhook
   "This function subscribes (or unsubscribes) so that each time a twitch
   user with `to-id` is the followed, Twitch will send a GET request to
   the `callback-url`.  `twitch-app-client-id` is the id you get when
   you create a Twitch App."
   [twitch-client-id to-id callback-url seconds subscribe?]
-  (let [hub-topic (str "https://api.twitch.tv/helix/users/follows?"
-                       "first=1&to_id=" to-id)
+  (let [hub-topic (follower-subscription-topic-url to-id)
         req-body (generate-string
                   {:hub.callback callback-url
                    :hub.mode (if subscribe? "subscribe" "unsubscribe")
@@ -157,7 +160,11 @@
                            "Content-Type" "application/json"}
                  :body req-body}
         url "https://api.twitch.tv/helix/webhooks/hub"
-        {:keys [status headers body error] :as result} @(http/post url options)]
+
+        result @(http/post url options)
+        
+        {:keys [status headers body error]} result]
+    
     (log (str "TWITCH WEBHOOK FOLLOWS: " req-body))
     (log (str "TWITCH WEBHOOK FOLLOWS: " status))
     ;; (if (and (> status 200) (< status 300))
@@ -166,6 +173,15 @@
     ;;     (log "Hmm, error when attempting subscription")
     ;;     (log result)))
     ))
+
+(defn active-follower-subscription?
+  [follow-user-id
+   get-webook-subscriptions-result]
+  (let [{:keys [total data]} get-webook-subscriptions-result]
+    (not (empty? (filter
+                  (fn [{:keys [topic]}]
+                    (= (follower-subscription-topic-url follow-user-id)
+                       topic)) data)))))
 
 (defn subscribe-to-follows [twitch-client-id to-id callback-url seconds]
   (follows-webhook twitch-client-id to-id callback-url seconds true))

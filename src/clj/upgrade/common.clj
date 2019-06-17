@@ -17,7 +17,9 @@
   ["/" {"color/query" :color-query
         "color/cycle" :color-next
         #".+\.html" :resources
+        #".+\.css" :resources        
         #"js/.+" :resources
+        #"img/.+" :resources
         "ws" :websocket
         "hub/follows" :follower
         }])
@@ -36,9 +38,11 @@
    :public-ip (decrypt
                key-file-path
                ;; Bungalow
-               "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKOHrFT3TUJJgj4OsFWkTWA=="
+               (str "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKO"
+                    "HrFT3TUJJgj4OsFWkTWA==")
                ;; Home
-               ;;"AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fkmkr80J1GrP7qnVSXZ4"
+               ;; (str "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fk"
+               ;;      "mkr80J1GrP7qnVSXZ4")
                )
    :port 8081})
 
@@ -57,24 +61,28 @@
     ;; this is my user token (I think) For an app token, you have to
     ;; do the oauth handshake with client id and secret (below)
     :oauth (decrypt key-file-path
-                    (str "AAAADCl+jp/Nxaj6uJ/WEjMIQ/0WTEgB72XjOsFOrPrIaO6U9rcVY"
-                         "XvQrdcSoH+ZCDeE2ngotqysBKOkVrtAyfvN8kw="))})
+                    (str "AAAADCl+jp/Nxaj6uJ/WEjMIQ/0WTEgB72Xj"
+                         "OsFOrPrIaO6U9rcVYXvQrdcSoH+ZCDeE2ngo"
+                         "tqysBKOkVrtAyfvN8kw="))})
 
 (def twitchapi-conf
   {;; clientid for the "Upgrading Dave Panel" (https://dev.twitch.tv/console)
    :clientid (decrypt key-file-path
-                      (str "AAAADJlq5n9wwoVZV2I55pjIpP/I3e6J4Mf6xV/4OGvHoZCveQ3"
+                      (str "AAAADJlq5n9wwoVZV2I55pjIpP/I3e6J4M"
+                           "f6xV/4OGvHoZCveQ3"
                            "JT9bJ9T+UR076abRqsKHnIbUDmFnUcHU="))
    :client-secret (decrypt key-file-path
-                           (str "AAAADBKPEvWXOz01z71b0BtBdEcxAOnVHjVHul/aWWjl+o"
+                           (str "AAAADBKPEvWXOz01z71b0BtBdEcxA"
+                                "OnVHjVHul/aWWjl+o"
                                 "Tir6LdfALoRxsm+1xX8NFV37Ue1pjmzJIKP/w="))
    :followers-callback-url twitch-followers-callback-url
    :follow-user-id "267319958"
    :subscribe-time-in-seconds 864000
    :app-token-results
    {:access_token (decrypt key-file-path
-                           (str "AAAADCqojgYlO9I/Je4Z+xDdx+eQDZF9NiHUhRB5RhGo7U"
-                                "5wWW22JVSPL/AEQgVf39QgqaBcnqgcKQcmNB8=")),
+                           (str "AAAADCqojgYlO9I/Je4Z+xDdx+eQD"
+                                "ZF9NiHUhRB5RhGo7U"
+                                "5wWW22JVSPL/AEQgVf39QgqaBcnqgcKQcmNB8="))
                        :expires_in 5267200,
                        :token_type "bearer"}
    })

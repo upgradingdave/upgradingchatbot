@@ -57,20 +57,76 @@
         (>= (.-y loc) max) (js/createVector (.-x vel) (- 0 (.-y vel)) )
         :else vel))
 
-(def app-key :emoticons)
 (def canvas (atom nil))
 
-;; state looks like this
+;; state looks like this. one key for each animation
+;; I call the keys `animation-key`
 ;; {:emoticons {:running? false
 ;;              :emote image
 ;;              :location vector
 ;;              :acceleration vector
 ;;              :velocity vector
+;;              }
+;; :followers {:running? false
+;;              :emote image
+;;              :location vector
+;;              :acceleration vector
+;;              :velocity vector
 ;;              }}
-(def state (atom {app-key nil}))
+
+(def state (atom {:emoticons nil
+                  :followers nil}))
+
+;; (defn welcome-followers []
+;;   (if-let [s (get-in @state [:followers])]
+
+;;     ;; Paint the screen with the current state
+;;     (let [{:keys [running?
+;;                   location
+;;                   velocity
+;;                   acceleration
+;;                   frames
+;;                   follower
+;;                   img]} s]
+
+;;       (when (and running? (< frames 500))
+
+;;         ;; display text
+;;         (js/textSize 64)
+;;         (js/fill (js/color 0 0 255))
+;;         (js/text (str "Welcome to the crew, " follower "! ")
+;;                  (.-x location) (.-y location))
+
+;;         (when img
+;;           (js/image img (.-x location) (.-y location))))
+
+;;       ;; update the state. 
+;;       (let [x-bound (client-width) 
+;;             y-bound (client-height)
+
+;;             location (-> location
+;;                          (move velocity)                            
+;;                          (guard x-bound y-bound))
+            
+;;             velocity (-> velocity
+;;                          (bounce-x location 0 x-bound)
+;;                          (bounce-y location 0 y-bound))
+            
+;;             frames (inc frames)
+
+;;             animation-key :followers
+;;             ]
+        
+;;         (swap! state assoc-in [animation-key :running?] running?)
+;;         (swap! state assoc-in [animation-key :location] location)
+;;         (swap! state assoc-in [animation-key :velocity] velocity)
+;;         (swap! state assoc-in [animation-key :acceleration] acceleration)
+;;         (swap! state assoc-in [animation-key :frames] frames))
+;;       ))
+;;   )
 
 (defn draw-emoticons []
-  (if-let [s (get-in @state [app-key])]
+  (if-let [s (get-in @state [:emoticons])]
     ;; Paint the screen with the current state
     (let [{:keys [running?
                   emote
@@ -105,14 +161,16 @@
                            (bounce-x location 0 x-bound)
                            (bounce-y location 0 y-bound))
               frames (inc frames)
+
+              animation-key :emoticons
               ]
 
-          (swap! state assoc-in [app-key :running?] running?)
-          (swap! state assoc-in [app-key :emote?] emote)
-          (swap! state assoc-in [app-key :location] location)
-          (swap! state assoc-in [app-key :velocity] velocity)
-          (swap! state assoc-in [app-key :acceleration] acceleration)
-          (swap! state assoc-in [app-key :frames] frames)))
+          (swap! state assoc-in [animation-key :running?] running?)
+          (swap! state assoc-in [animation-key :emote?] emote)
+          (swap! state assoc-in [animation-key :location] location)
+          (swap! state assoc-in [animation-key :velocity] velocity)
+          (swap! state assoc-in [animation-key :acceleration] acceleration)
+          (swap! state assoc-in [animation-key :frames] frames)))
       )))
 
 ;;wink smile https://static-cdn.jtvnw.net/emoticons/v1/11/2.0
@@ -126,41 +184,77 @@
     (.parent c "my-canvas")
     (reset! canvas c)
 
-    ;; setup initial state for emoticons
-    (swap! state assoc-in [app-key :running?] false)
-    (swap! state assoc-in [app-key :frames] 0)
-    ;; already created emote in preload
-    ;; (swap! state assoc-in [app-key :emote?] emote)
-    (swap! state assoc-in [app-key :location] (js/createVector (client-width)
-                                                               (client-height)))
-    (swap! state assoc-in [app-key :velocity] (js/createVector 2.5 2))
-    (swap! state assoc-in [app-key :acceleration] (js/createVector 0.01 0.1))    
-))
+    ;; ---- EMOTICONS -----
+    (let [animation-key :emoticons]
+      (swap! state assoc-in [animation-key :running?] false)
+      (swap! state assoc-in [animation-key :frames] 0)
+      ;; already created emote in preload
+      ;; (swap! state assoc-in [animation-key :emote?] emote)
+      (swap! state assoc-in [animation-key :location]
+             (js/createVector (client-width)
+                              (client-height)))
+      (swap! state assoc-in [animation-key :velocity] (js/createVector 2.5 2))
+      (swap! state assoc-in [animation-key :acceleration]
+             (js/createVector 0.01 0.1)))
+
+    ;; ---- FOLLOWERS -----
+    (let [animation-key :followers]
+      (swap! state assoc-in [animation-key :running?] false)
+      (swap! state assoc-in [animation-key :frames] 0)
+      ;; already created emote in preload
+      ;; (swap! state assoc-in [animation-key :emote?] emote)
+      (swap! state assoc-in [animation-key :location]
+             (js/createVector (client-width)
+                              (client-height)))
+      (swap! state assoc-in [animation-key :velocity] (js/createVector 2.5 2))
+      (swap! state assoc-in [animation-key :acceleration]
+             (js/createVector 0.01 0.1)))
+    
+    ))
 
 (defn draw []
   (js/clear)
   ;;(js/background 0)
 
-  (draw-emoticons))
+  (draw-emoticons)
+  ;;(welcome-followers)
+  )
 
 ;; websockets
 (defonce ws-chan (atom nil))
 
+;; Example of emoticon img url
+;; (js/loadImage "https://static-cdn.jtvnw.net/emoticons/v1/30259/2.5")
 (defn handle-ws-event [evt]
   "This is an event handler for websocket messages. It's registered as
   WebSocket.onmessage"
   (log "Got a message!")
   (log evt)
   (let [msg (->> evt .-data (transit/read json-reader))
-        url (:url msg)]
-    (do
-      (swap! state assoc-in [app-key :emote] nil)
-      (swap! state assoc-in [app-key :running?] true)
-      (swap! state assoc-in [app-key :frames] 0)
-      ;; TODO
-      (swap! state assoc-in [app-key :emote]
-             ;;(js/loadImage "https://static-cdn.jtvnw.net/emoticons/v1/30259/2.5")
-             (js/loadImage url)))))
+        animation-key (:animation-key msg)]
+
+    (cond
+      (= animation-key :emoticons)
+      (let [url (:url msg)]
+        (swap! state assoc-in [animation-key :emote] nil)
+        (swap! state assoc-in [animation-key :running?] true)
+        (swap! state assoc-in [animation-key :frames] 0)
+        (swap! state assoc-in [animation-key :emote]
+               (js/loadImage url)))
+
+      (= animation-key :followers)
+      (let [follower (:follower msg)]
+        ;;(swap! state assoc-in [animation-key :emote] nil)
+        (swap! state assoc-in [animation-key :running?] true)
+        (swap! state assoc-in [animation-key :frames] 0)
+        (swap! state assoc-in [animation-key :follower] follower)
+        (swap! state assoc-in [animation-key :img]
+               (js/loadImage "/img/dancing_sailors.gif")))
+
+      :else
+      (log (str "Need to implement animation-key: " animation-key)))
+
+    ))
 
 (defn make-websocket! [url]
  (log "attempting to connect websocket")
@@ -174,6 +268,12 @@
 (def url "http://localhost:8081")
 (def ws-url "ws://localhost:8081/ws")
 
+(defn view []
+  (let []
+    (fn []
+      [:div {:style {:position "absolute" :margin "auto"}}
+       [:img {:src "/img/dancing_sailors.gif"}]])))
+
 (defn run []
   (log "[P5JS] run")
   ;; connect to websocket
@@ -182,7 +282,11 @@
   (doto js/window
     (aset "setup" setup)
     (aset "draw" draw)
-    (aset "preload" preload)))
+    (aset "preload" preload))
+
+  ;; (reagent/render [view]
+  ;;                 (js/document.getElementById "app"))
+  )
 
 (defonce start-up (do (run) true))
 
@@ -190,7 +294,6 @@
   (log "[FIGWHEEL] restart")
   (preload)
   (setup)
-  (run)
-  )
+  (run))
 
 

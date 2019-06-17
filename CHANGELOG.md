@@ -8,7 +8,8 @@
 
 ## Webhooks (follows)
 
-- display message when someone follows
+- support playing mutliple animations in sequence (in case multiple
+  people follow back to back)
 - capture follows webhook subscription id and track it in system state
 
 ## Extensions Backend Service 
@@ -18,21 +19,20 @@
 
 ## Animations 
 
-- able to do multiple emotes at same time
-- add animation for new follows
+- able to display multiple emotes at same time
 
 ## Chatbot
 
-- Tweak the scheduled messages. I'd like several different messages to 
-  be broadcasted every few minutes. 
-- Able to play any mp3 link? (how to filter though?)
+- !today - Tweak the scheduled messages. I'd like several different
+  messages to be broadcasted every few minutes.
+- !play - able to play any mp3 link? (how to filter though?)
 - move the simple message type commands out to a config file
-- Add help for all other commands (we already did !play)
-- And also allow for this syntax: !help !play as well as !help play
+- !help - add help for all other commands (we already did !play)
+- !help - also allow for this syntax: !help !play as well as !help play
 - catch exceptions when chatbot client loses connection
 - Setup unit tests?
-- By default, limit search results to 30 seconds or less
-- Play command - make the download from freesound asynchronous. 
+- !play - By default, limit play search results to 30 seconds or less
+- !play - make the download from freesound asynchronous. 
 - If needed, refactor code to allow for connecting to multiple channels
 
 ## Documentation Site
@@ -43,9 +43,16 @@
 
 ## Write a todo list
 
-- Write a simple clojure app to replace this list. Maybe use github issues?
+- Write a simple clojure app to replace this list. I could use github
+  issues, but I'd rather write my own in clojure ;-)
 
 # Complete
+
+## 2019-06-12, 2019-06-14, 2019-06-17 (on stream)
+
+- play a sound and display message when someone follows
+- setup react-transition-group to do css transition animations
+- fixed a bug so that webhook subscription works when http server starts up
 
 ## 2019-05-31 (off stream)
 

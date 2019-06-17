@@ -1,3 +1,5 @@
+
+
 {:paths
  ["src/clj" "src/cljs" "resources/public"]
 
@@ -22,18 +24,42 @@
   ring/ring-mock {:mvn/version "0.4.0"}
   upgrade/encrypt {:mvn/version "0.0.1"}}
  
- :aliases {:repl
+ :aliases {
+           :uberjar
+           {:extra-deps {uberdeps {:mvn/version "0.1.4"}}}
+           
+           :repl
            {:extra-deps
             {cider/cider-nrepl {:mvn/version "0.21.1"}
              org.clojure/tools.deps.alpha {:mvn/version "0.6.496"}}}
 
           :figwheel
            {:extra-deps
-            {com.cognitect/transit-cljs {:mvn/version "0.8.256"}
+            {
+
+             ;; react based libs
+             cljsjs/react {:mvn/version "16.8.3-0"}
+             cljsjs/react-dom {:mvn/version "16.8.3-0"}
+             cljsjs/react-transition-group {:mvn/version "2.4.0-0"
+                                            :exclusions [react react-dom]}
+             reagent {:mvn/version "0.8.1"
+                      :exclusions [react react-dom]}
+
+             ;; not sure I need react-dom-server?
+             ;;cljsjs/react-dom-server {:mvn/version "15.6.1-0"}
+
+             ;; react-with-addons is deprecated, don't use it
+             ;;cljsjs/react-with-addons {:mvn/version "15.6.1-0"}
+
+             ;; re-frame stuff
+             day8.re-frame/http-fx {:mvn/version "0.1.6"}
+             re-frame {:mvn/version "0.10.6"
+                       :exclusions [reagent]}
+             
+             com.cognitect/transit-cljs {:mvn/version "0.8.256"}
              com.bhauman/figwheel-main {:mvn/version "0.2.0"}
              org.clojure/clojurescript {:mvn/version "1.10.516"}
-             re-frame {:mvn/version "0.10.6"}
-             day8.re-frame/http-fx {:mvn/version "0.1.6"}
+
              }}
            }}
 

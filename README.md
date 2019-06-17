@@ -54,8 +54,18 @@ Whenever someone types a emote in chat, the chatbot communicates with
 a web page and http server over websockets to display a P5.js
 animation of the emote icon floating around the page.
 
-Dave has this page configured as an overlay inside OBS, so it looks
+When you configured this url as an overlay inside OBS, so it looks
 like emotes float around the screen during the stream.
+
+## Follower Animations
+
+https://clips.twitch.tv/EsteemedBoxyGarageLitty
+
+This code subscribes to Twitch so that Twitch will send a http request
+whenever someone clicks to follow the channel. If this happens during
+a live stream, the http server code plays a mp3 and displays an
+animation on a web page. When this webpage is setup as an overlay in
+OBS, then new followers are greeted by the animation during live streams.
 
 ## Commands
 
@@ -100,20 +110,20 @@ if it find a result, it will play the sound during the stream.
 - Gold !play 161315
 - Russian Festival !play 468218
 
-# History
+# CSS Animations
 
-- June 2019 :: The goals for this month is to have animation play when
-  new followers follow me and/or new subscribers subscribe. I'd also
-  like to implement my own web version of the chat to display as an
-  overlay.
-  
-- May 2019 :: Starting to develop my own clojure(script)
-  twitch chatbot. Added a bunch of commands. Wrote a basic Twitch
-  Extension using clojure and clojurescript. Also added 2d animated
-  bouncing emoticons in clojurescript (using processing.js)
+CSS Animations in react / reagent / re-frame are sort of difficult
 
-- April 2019 :: Dave fumbling thru first live streams and trying to
-  get over his fear of public speaking.
+Here's a good overview of css animations: 
+https://javascript.info/css-animations
+
+Here's what I am using: 
+https://reactcommunity.org/react-transition-group/
+https://github.com/reactjs/react-transition-group
+
+Here are sites for inspiration:
+http://animista.net/play/entrances
+https://github.com/daneden/animate.css/blob/master/animate.css
 
 # Development
 
@@ -147,6 +157,21 @@ I'm challenging myself to live stream on twitch every Mon/Wed/Fri
 If you're interested in clojure, (or any type of programming for that
 matter!), please come hang out and say hi. 
 
+# History
+
+- June 2019 :: The goals for this month is to have animation play when
+  new followers follow me and/or new subscribers subscribe. I'd also
+  like to implement my own web version of the chat to display as an
+  overlay.
+  
+- May 2019 :: Starting to develop my own clojure(script)
+  twitch chatbot. Added a bunch of commands. Wrote a basic Twitch
+  Extension using clojure and clojurescript. Also added 2d animated
+  bouncing emoticons in clojurescript (using processing.js)
+
+- April 2019 :: Dave fumbling thru first live streams and trying to
+  get over his fear of public speaking.
+
 ## Streaming Notes
 
 1. Open the twitch dashboard
@@ -156,9 +181,10 @@ matter!), please come hang out and say hi.
    iShowU Audio Capture)
 5. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
 6. Set Mic volume in OBS so recording around -20 db (just above green)
-7. Start stream with "Starting Soon" OBS Scene
-8. Setup chat view, and windows, Setup Desktop OBS Scene
-9. Start chatbot
+7. Start chatbot
+8. Start stream with "Starting Soon" OBS Scene
+9. Remove url from overlay and add it back
+10. Setup chat view, and windows, Setup Desktop OBS Scene
 
 ## Royalty Free Music
 
@@ -176,3 +202,4 @@ matter!), please come hang out and say hi.
 ## Functional concepts to learn
 - https://stackoverflow.com/questions/8307370/functional-lenses
 - https://wiki.haskell.org/Rank-N_types
+- https://en.wikipedia.org/wiki/Church_encoding
