@@ -4,13 +4,14 @@
             [buddy.sign.jwt :as jwt]
             [clojure.java.io :as io]
             [clj-time.core :as time]
+            [hiccup.core :refer [html]]
             [org.httpkit.server :as httpkit :refer [send! with-channel]]
             [ring.util.response :as res]
             [ring.middleware.json :refer [wrap-json-response
                                           wrap-json-body]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.mock.request :as mock]
-            [upgrade.common :refer [log routes transitWrite]]
+            [upgrade.common :refer [log routes transitWrite get-config]]
             [upgrade.freesound :refer [play-sound!]]            
             [upgrade.twitchbot :refer [send-message ws-clients]]
             [upgrade.twitch :refer [active-follower-subscription?
@@ -69,7 +70,9 @@
     ))
 
 (defn play-follower-animation [client channel from_name]
-  (play-sound! 468218)
+
+  (play-file! )
+  ;; Really annoying festival music! (play-sound! 468218)
   
   (doseq [ch @ws-clients]
     (send! ch (transitWrite {:animation-key :followers
@@ -119,9 +122,28 @@
         (res/response "Thanks, Twitch!"))
 
 
-      ;; This is just some nincompoop browsing this endpoint
+      ;; If this is just someong browsing this endpoint, display
+      ;; statistics about follower subscriptions
       :else
-      (res/response "Twitch webhook endpoint is up!"))))
+      (let [conf (get-config)
+            clientid (get-in conf [:twitchapi :clientid])
+            app-token (get-in conf [:twitchapi :app-token-results
+                                    :access_token])
+            result (get-webhook-subscriptions clientid app-token)
+            total-subs (get result :total 0)
+            ;; subs (map (fn [sub] ) (:data result))
+            
+            ]
+        
+        (res/response
+         (html
+          [:div
+           [:div "Twitch webhook endpoint is up!"]
+           [:div "Total Active Follower Subscriptions: " total-subs]
+           [:ul
+            (map (fn [sub] [:li [:p (:callback sub)]
+                            [:p (:expires_at sub)]]) (:data result))]]
+          ))))))
 
 (defn websocket-handler [request]
   (with-channel request channel
@@ -174,10 +196,11 @@
 (defn app [req]
   (handler req))
 
-;; The #' is useful when you want to hot-reload code
-;; You may want to take a look: https://github.com/clojure/tools.namespace
-;; and http://http-kit.org/migration.html#reload
+;; The #' is useful when you want to hot-reload code You may want to
+;; take a look: https://github.com/clojure/tools.namespace and
+;; http://http-kit.org/migration.html#reload
 (defn run-server [port]
+  (log port)
   (httpkit/run-server #'app {:port port}))
 
 ;; TODO: add webhook subscription id to system state
@@ -193,12 +216,14 @@
                 app-token-results]} twitchapi
         app-token (:access_token app-token-results)]
     (swap! http-state assoc :twitchbot twitchbot)
-
+    (log "Attempting to start http server on port: " port " ...")
     (let [server (run-server port)
           ;; check if we have an active follower subscription
           result (get-webhook-subscriptions clientid app-token)
           subscribed? (active-follower-subscription?
-                        follow-user-id result)]
+                       followers-callback-url
+                       follow-user-id
+                       result)]
 
       (if-not subscribed?
         (subscribe-to-follows clientid
@@ -220,7 +245,8 @@
 
     (swap! http-state assoc :twitchbot nil)
 
-    (unsubscribe-to-follows clientid follow-user-id followers-callback-url
+    (unsubscribe-to-follows clientid follow-user-id
+                            followers-callback-url
                             subscribe-time-in-seconds)
 
     (if (nil? server)
@@ -232,9 +258,22 @@
 
 
 (comment
-
   (def conf (get-config))
   (def clientid (get-in conf [:twitchapi :clientid]))
+  (def client-secret (get-in conf [:twitchapi :client-secret]))
+  (def app-token (get-in conf [:twitchapi :app-token-results :access_token]))
+  (def follow-user-id (get-in conf [:twitchapi :follow-user-id]))
+  (def followers-callback-url (get-in conf [:twitchapi :followers-callback-url]))
+
+    (def subscribe-time-in-seconds (get-in conf [:twitchapi :subscribe-time-in-seconds]))
+
+
+  (def client (get-in conf [:twitchbot :client]))
   (def channel (get-in conf [:twitchbot :channel]))
 
+  (doseq [ch @ws-clients]
+    (send! ch (transitWrite {:animation-key :chat
+                             :msg "test chat"})))
+
+  
   )

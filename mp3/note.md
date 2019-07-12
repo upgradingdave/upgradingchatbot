@@ -1,1 +1,2 @@
-(This is the directory used to cache mp3 files)
+Any mp3 files inside this directory can be easily played via the
+`!play` command. For example: `!play drunkensailor`

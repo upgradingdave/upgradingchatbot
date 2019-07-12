@@ -176,12 +176,15 @@
 
 (defn active-follower-subscription?
   [follow-user-id
+   followers-callback-url
    get-webook-subscriptions-result]
   (let [{:keys [total data]} get-webook-subscriptions-result]
     (not (empty? (filter
-                  (fn [{:keys [topic]}]
-                    (= (follower-subscription-topic-url follow-user-id)
-                       topic)) data)))))
+                  (fn [{:keys [topic callback]}]
+                    (and
+                     (= callback followers-callback-url)
+                     (= (follower-subscription-topic-url follow-user-id)
+                        topic))) data)))))
 
 (defn subscribe-to-follows [twitch-client-id to-id callback-url seconds]
   (follows-webhook twitch-client-id to-id callback-url seconds true))

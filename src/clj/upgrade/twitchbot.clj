@@ -7,7 +7,9 @@
             [upgrade.freesound :refer [search-and-play-nth!
                                        play-sound!
                                        players-stop!
-                                       play-not-found!]]
+                                       play-not-found!
+                                       search-and-play-file!
+                                       play-mp3-from-url!]]
              [upgrade.twitch :refer [getEmoteChangeSet!
                                     emoteSetRegexStr
                                      findEmoteImageUrl]])
@@ -19,6 +21,8 @@
             ChannelNoticeEvent
             ChannelJoinEvent
             ChannelPartEvent]
+           [org.kitteh.irc.client.library.event.connection
+            ClientConnectionFailedEvent]
            [org.kitteh.irc.client.library.event.client
             ClientReceiveCommandEvent
             ClientReceiveNumericEvent]
@@ -35,7 +39,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm working on the clojurescript (cljs) that displays animations when a new follower follows the channel. I'm not very good at css, so bear with me!")))
+  (str (str "Today I'm trying to implement the ability to play any mp3 file from the twitch chat")))
 
 (defn chatbot-help-message []
   (str
@@ -89,7 +93,7 @@
        "space= #\"\\s+\"\n"
        ))
 
-(defn freesound-reply [url]
+(defn play-reply [url]
   (str "SingsNote SingsNote SingsNote " url))
 
 (defn handle-channel-command [evt]
@@ -104,6 +108,9 @@
       ;; handle failure
       (do
         (log (str "Chatbot heard: " msg))
+        (doseq [ch @ws-clients]
+          (send! ch (transitWrite {:animation-key :chat
+                                   :msg msg})))
         ;;(.sendReply evt (str "I heard ya! But that's not a command: " msg ))
         )
       
@@ -144,25 +151,41 @@
             (case search-type
 
               :first-result-search
-              (let [[_ [_ search-term]] args
-                    url (search-and-play-nth! search-term 0)]
-                (if url 
-                  (.sendReply evt (freesound-reply url))
-                  ;; else
-                  (play-not-found!)))
+              (let [[_ [_ search-term]] args]
+
+                (if-let [mp3-result (search-and-play-file! search-term)]
+                  ;; if the search-term matches an mp3 file inside the
+                  ;; mp3 directory, then play it.
+                  (.sendReply evt
+                              (play-reply
+                               (str "Found '" search-term "' MP3!!")))
+
+                  ;; Check if this is a url and try playing that
+                  (if (re-matches #"http.+\.mp3" search-term)
+
+                    ;; this is a mp3 url
+                    (play-mp3-from-url! search-term)
+
+                    ;; otherwise, this is a freesound.org search
+                    (let [url (search-and-play-nth! search-term 0)]
+                      (if url 
+                        (.sendReply evt (play-reply url))
+                        ;; else
+                        (play-not-found!)))                    
+                    )))
               
               :nth-result-search
               (let [[_ [_ idx [_ search-term]]] args
                     url (search-and-play-nth! search-term (Integer/parseInt idx))]
                 (if url
-                  (.sendReply evt (freesound-reply url))
+                  (.sendReply evt (play-reply url))
                   ;; else 
                   (play-not-found!)))
 
               :sound-id
               (let [[_ [_ sound-id]] args]
                 (if-let [url (play-sound! sound-id)]
-                  (.sendReply evt (freesound-reply url))
+                  (.sendReply evt (play-reply url))
                   ;; else
                   (play-not-found!)))
 
@@ -236,8 +259,14 @@
 
       (instance? ClientReceiveCommandEvent evt)
       (let []
-        (log (str "ClientRecieveCommandEvent"))
-        (log evt))
+        ;;(log (str "ClientRecieveCommandEvent"))
+        ;;(log evt)
+        )
+
+      (instance? ClientConnectionFailedEvent evt)
+      (let []
+        (log (str "Got Disconnected??!!"))
+        (log (str evt)))
       
       :else
       (log (str "NEED IMPLEMENTATION FOR: " event-type))
@@ -304,6 +333,15 @@
     ;; Not sure how to handle exceptions
     ;;(.getExceptionListener client)
     (TwitchSupport/addSupport client)))
+
+
+;; Here we are implementing the Thread.UncaughtExceptionHandler just
+;; in case the underlying thread created by the KICL irc library throw
+;; any exceptions we can handle them
+
+(def h (reify Thread$UncaughtExceptionHandler    
+         (uncaughtException [this t e] 
+           (log (str t ": " e)))))
 
 (defn connect-and-add-channel!
   "Connect and start listening to channels"

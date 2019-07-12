@@ -65,9 +65,21 @@
     (.start t)
     t))
 
-(defn play-file! [filename & opts]
-  (let [fis (java.io.FileInputStream. filename)]
-    (play-input-stream! fis opts)))
+(defn play-file! [full-file-path]
+  (let [fis (java.io.FileInputStream. full-file-path)]
+    (play-input-stream! fis)))
+
+;; TODO: move this "mp3" directory into config 
+(defn search-and-play-file! [filename]
+  (let [path-to-file (str "./mp3/" filename ".mp3")
+        f (java.io.File. path-to-file)
+        exists? (.exists f)]
+    (if exists?
+      (do
+        (play-file! f)
+        path-to-file)
+
+      false)))
 
 (defn get-preview-hq-mp3 [sound-result]
   "Get the url of the hq mp3 preview found in results from fetch-sound!"
@@ -81,7 +93,7 @@
 ;; freesound api calls or unneccessarily download mp3 files
 
 ;; TODO move to config
-(def mp3-cache-dir "./mp3")
+(def mp3-cache-dir "./cache/mp3")
 
 ;; This is a map where keys are the guids that are generated from
 ;; searches for sounds from freesound api. The values are urls to the
@@ -93,10 +105,45 @@
   (reset! mp3-cache {})
   (let [all-files (file-seq (io/file mp3-cache-dir))
         mp3-files (filter (fn [f] (and (.isFile f)
-                                       (= '(\m \p \3) (take-last 3 (.getName f)))))
+                                       (= '(\m \p \3)
+                                          (take-last 3 (.getName f)))))
                           all-files)]
     (doseq [f mp3-files]
       (io/delete-file f true))))
+
+;; TODO refactor into a mp3.clj namespace maybe?
+(defn fetch-mp3-from-url-and-play-and-cache! [mp3-url guid file-name]
+  "Clear any existing file that exists for this sound-id, then
+  Download the mp3 preview, play it, and save it for later."
+  (io/delete-file file-name true)
+  (let [stream (fetch-mp3! mp3-url)]
+    (if (not (nil? stream))
+      (let [bis (java.io.ByteArrayInputStream. stream)]
+          (play-input-stream! bis)
+          (swap! mp3-cache assoc guid mp3-url)
+          (with-open [w (io/output-stream file-name)]
+            (.write w stream))
+          mp3-url))))
+
+(defn play-mp3-from-url!
+  ([mp3-url] (play-mp3-from-url! mp3-url false))
+  ([mp3-url clear-cache?]
+   (let [guid (md5 (str mp3-url))
+         cached-url (get @mp3-cache guid nil)
+         file-name (str mp3-cache-dir "/" guid ".mp3")
+         f (io/file file-name)]
+
+     (if (and (.exists f)
+              (not clear-cache?))
+
+       ;; if the file exists in cache, use it.
+       (do
+         (play-input-stream! (io/input-stream f))
+         mp3-url)
+
+       ;; else
+       (fetch-mp3-from-url-and-play-and-cache!
+        mp3-url guid file-name)))))
 
 (defn fetch-mp3-and-play-and-cache! [sound-id guid file-name]
   "Clear any existing file that exists for this sound-id, then

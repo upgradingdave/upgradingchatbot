@@ -13,6 +13,14 @@
   (.. (EncryptionManager.)
       (decrypt (java.io.File. key-file-path) message)))
 
+;; Date Time Stuff
+(defn now []
+  (java.util.Date.))
+
+(defn now-str [datetime]
+  (let [sdf (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss")]
+    (.format sdf datetime)))
+
 (def routes
   ["/" {"color/query" :color-query
         "color/cycle" :color-next
@@ -38,11 +46,11 @@
    :public-ip (decrypt
                key-file-path
                ;; Bungalow
-               (str "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKO"
-                    "HrFT3TUJJgj4OsFWkTWA==")
+               ;; (str "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKO"
+               ;;      "HrFT3TUJJgj4OsFWkTWA==")
                ;; Home
-               ;; (str "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fk"
-               ;;      "mkr80J1GrP7qnVSXZ4")
+               (str "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fk"
+                    "mkr80J1GrP7qnVSXZ4")
                )
    :port 8081})
 
@@ -77,7 +85,7 @@
                                 "Tir6LdfALoRxsm+1xX8NFV37Ue1pjmzJIKP/w="))
    :followers-callback-url twitch-followers-callback-url
    :follow-user-id "267319958"
-   :subscribe-time-in-seconds 864000
+   :subscribe-time-in-seconds 86400
    :app-token-results
    {:access_token (decrypt key-file-path
                            (str "AAAADCqojgYlO9I/Je4Z+xDdx+eQD"
@@ -93,10 +101,14 @@
              :twitchapi twitchapi-conf
              :twitchbot twitchbot-conf)))
 
-(defn log
-  ([msg] (log log-file-path msg))
-  ([path-to-file msg]
-   (spit path-to-file (str msg "\n") :append true)))
+(defn log*
+  [path-to-file & msgs]
+  (let [prefix (str (now-str (now)) "  ")
+        suffix "\n"
+        msg (apply str msgs)]
+    (spit path-to-file (str prefix msg suffix) :append true)))
+
+(defn log [& msgs] (apply log* (concat [log-file-path] msgs)))
 
 (defn transitWrite [msg]
   (with-open [out (ByteArrayOutputStream. 4096)]

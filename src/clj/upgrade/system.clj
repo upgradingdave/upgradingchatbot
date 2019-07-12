@@ -29,7 +29,13 @@
                 ;; state. This way sensitive data can't ever be seen
                 ;; on stream!
 
-                (-> (start-fn (merge current conf))
+                ;; Note that we need to merge both at the system level
+                ;; and at the component level
+                
+                (-> (merge conf current)
+                    (assoc-in [kw]
+                              (merge (kw conf) (kw current)))
+                    (start-fn)
                     (assoc :running? true)))
          
          ;; else
@@ -45,7 +51,8 @@
            conf (get-config)]
        (if (:running? component)
          (assoc current kw
-                (-> (stop-fn (merge current conf))
+                (-> (merge conf current)
+                    (stop-fn)
                     (assoc :running? false)))
          
          ;; else
@@ -54,11 +61,14 @@
 (defn start-twitchbot!
   "Start a twitchbot and update httpkit's dependency on twitchbot"
   []
-  (let [{:keys [twitchbot]} (start-component! :twitchbot bot/start-twitchbot!)]
+  (let [{:keys [twitchbot]}
+        (start-component! :twitchbot bot/start-twitchbot!)]
     (swap! system assoc-in [:httpkit :twitchbot] twitchbot)))
 
 (defn stop-twitchbot! []
-  (stop-component! :twitchbot bot/stop-twitchbot!))
+  (let [{:keys [twitchbot]}
+        (stop-component! :twitchbot bot/stop-twitchbot!)]
+    (swap! system assoc-in [:httpkit :twitchbot] twitchbot)))
 
 (defn start-httpkit! []
   (start-component! :httpkit http/start-httpkit!))

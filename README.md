@@ -87,8 +87,7 @@ Here's a (probably outdated) list of commands:
 Currently, the `play` command will search `http://freesound.org` and
 if it find a result, it will play the sound during the stream.
 
-- !play car crash
-- (car crash) !play 237375
+- Drum roll !play 424927
 - (powerup) !play 431329 
 - (8bit intro) !play 273539
 - !play 2 yay
@@ -105,10 +104,14 @@ if it find a result, it will play the sound during the stream.
 - !play 1 underwater
 - !play 368024 video game
 - !play 345619 whats up baby
-
-- Stand firm !play 397298
 - Gold !play 161315
 - Russian Festival !play 468218
+
+- Stand firm !play 397298
+- Drunks fighting !play 15559
+- long sword fight !play 192072
+- medievalcombat !play 218522
+- dragon !play 249686
 
 # CSS Animations
 
@@ -182,8 +185,8 @@ matter!), please come hang out and say hi.
 5. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
 6. Set Mic volume in OBS so recording around -20 db (just above green)
 7. Start chatbot
-8. Start stream with "Starting Soon" OBS Scene
-9. Remove url from overlay and add it back
+8. Remove url from overlays and add them back
+9. Start stream with "Starting Soon" OBS Scene
 10. Setup chat view, and windows, Setup Desktop OBS Scene
 
 ## Royalty Free Music
