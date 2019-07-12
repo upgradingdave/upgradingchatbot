@@ -1,0 +1,4 @@
+{:main upgrade.chat
+ :output-to "resources/public/js/chat.js"
+ :output-dir "resources/public/js/out"
+ }

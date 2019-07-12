@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+}
+
+.page {
+  display: grid;
+  grid-template-columns: 1024px 256px;
+  grid-template-rows: 550px 72px;
+  grid-template-areas:
+  ". chat"
+  "footer footer"
+			 
+}
+
+.chat {
+  grid-column-start: 2;
+  grid-area: chat;
+  border: 1px solid green;
+}
+
+.footer {
+  grid-row-start: 2;
+  grid-area: footer;
+  border: 1px solid red;
+}
+
+

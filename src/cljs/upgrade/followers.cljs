@@ -35,7 +35,7 @@
    (let [{:keys [animation-key follower]} msg]
      {:db {animation-key {:follower follower
                           :running? true}}
-      :dispatch-later [{:ms 10000 :dispatch [::stop]}]}
+      :dispatch-later [{:ms 20000 :dispatch [::stop]}]}
      )))
 
 (rf/reg-event-db
