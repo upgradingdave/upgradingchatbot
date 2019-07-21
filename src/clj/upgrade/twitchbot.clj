@@ -39,7 +39,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm trying to implement the ability to play any mp3 file from the twitch chat")))
+  (str (str "Today I'm trying to build a web view of the twitch chat to display on stream")))
 
 (defn chatbot-help-message []
   (str
@@ -106,11 +106,16 @@
     (if parse-failure?
 
       ;; handle failure
-      (do
+      (let [actor (. evt getActor)
+            nick (.getNick actor)]
+        ;;(log (str "Chatbot actor: " (. evt getActor)))
+        ;;(log (str "Chatbot source: " (. evt getSource)))
+        (log (str "Chatbot nick: " nick))
         (log (str "Chatbot heard: " msg))
+        
         (doseq [ch @ws-clients]
           (send! ch (transitWrite {:animation-key :chat
-                                   :msg msg})))
+                                   :payload {:msg msg :nick nick}})))
         ;;(.sendReply evt (str "I heard ya! But that's not a command: " msg ))
         )
       
@@ -156,17 +161,24 @@
                 (if-let [mp3-result (search-and-play-file! search-term)]
                   ;; if the search-term matches an mp3 file inside the
                   ;; mp3 directory, then play it.
-                  (.sendReply evt
-                              (play-reply
-                               (str "Found '" search-term "' MP3!!")))
+                  (.sendReply
+                   evt
+                   (play-reply
+                    (str "Found local '" search-term ".mp3' file!!!")))
 
                   ;; Check if this is a url and try playing that
                   (if (re-matches #"http.+\.mp3" search-term)
 
                     ;; this is a mp3 url
-                    (play-mp3-from-url! search-term)
+                    (do
+                      (play-mp3-from-url! search-term)
+                      (.sendReply
+                       evt
+                       (play-reply
+                        (str "Successfully loaded mp3 from url '"
+                             search-term "'!!!"))))
 
-                    ;; otherwise, this is a freesound.org search
+                  ;; otherwise, this is a freesound.org search
                     (let [url (search-and-play-nth! search-term 0)]
                       (if url 
                         (.sendReply evt (play-reply url))

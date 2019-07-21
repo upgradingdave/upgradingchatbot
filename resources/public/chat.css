@@ -1,27 +1,108 @@
-body {
+html, body {
   margin: 0;
+  height: 100%;
 }
 
 .page {
+
   display: grid;
-  grid-template-columns: 1024px 256px;
-  grid-template-rows: 550px 72px;
-  grid-template-areas:
-  ". chat"
-  "footer footer"
-			 
+  grid-template-columns: 960px auto;
+  grid-template-rows: 540px auto;
+  grid-template-areas: ". chat" "footer footer";
+
+  border: 1px solid orange;
+  height: 720px;
+  
 }
+
+/* https://ethanschoonover.com/solarized/ */
 
 .chat {
   grid-column-start: 2;
   grid-area: chat;
-  border: 1px solid green;
+
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.chat__gutter {
+  /* border: 1px solid green; */
+
+  width: 20px;
+  background-color: #073642;
+}
+
+.chat__message-list {
+  /* border: 1px solid red; */
+  width: 100%;
+  padding: 15px 15px 15px 5px; 
+  background-color: #002b36;
+}
+
+.chat__nick {
+  font-size: 14px;
+  font-family: Menlo;
+  /* blue */
+  color: #268bd2
+}
+
+.chat__msg {
+  font-size: 14px;
+  font-family: Menlo;
+  /* base0 */
+  color: #839496;
+  padding-bottom: 10px;
 }
 
 .footer {
+  /* border: 1px solid red; */  
   grid-row-start: 2;
   grid-area: footer;
-  border: 1px solid red;
+
+  display: flex;
+  flex-direction: column;
+  aligh-items: stretch;
+  
 }
+
+.footer__top {
+  flex: none;
+  height: 20px;
+  background-color: #073642;
+}
+
+.footer__main {
+  flex: none;
+  height: 100%;
+  padding: 20px;
+  background-color: #002b36;
+
+  font-family: Menlo;
+  font-size: 30px;
+  color: #2aa198;
+}
+
+
+/* #002b36 base03 background */
+/* #073642 base02 background highiight */
+/* #586e75 base01 comments/secondary content */
+/* #657b83 base00 gray    ?? */
+/* #839496 base0  body text */
+/* #93a1a1 base1  optional emphasized content */
+/* #eee8d5 base2  white */
+/* #fdf6e3 base3  brwhite */
+/* #b58900 yellow  */
+/* #cb4b16 orange */
+/* #dc322f red  */
+/* #d33682 magenta */
+/* #6c71c4 violet */
+/* #268bd2 blue */
+/* #2aa198 cyan */
+/* #859900 green */
+
+
+
 
 

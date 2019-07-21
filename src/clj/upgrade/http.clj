@@ -12,7 +12,7 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.mock.request :as mock]
             [upgrade.common :refer [log routes transitWrite get-config]]
-            [upgrade.freesound :refer [play-sound!]]            
+            [upgrade.freesound :refer [search-and-play-file!]]
             [upgrade.twitchbot :refer [send-message ws-clients]]
             [upgrade.twitch :refer [active-follower-subscription?
                                     get-webhook-subscriptions
@@ -71,8 +71,8 @@
 
 (defn play-follower-animation [client channel from_name]
 
-  (play-file! )
   ;; Really annoying festival music! (play-sound! 468218)
+  (search-and-play-file! "drunkensailor")
   
   (doseq [ch @ws-clients]
     (send! ch (transitWrite {:animation-key :followers

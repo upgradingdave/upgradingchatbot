@@ -20,13 +20,14 @@
  (fn [_ _]
    (log (str "Initializing app-db"))
    {:init true
-    :chat-msgs ["Just some test chats" "Here's another one"]}))
+    :chat-msgs [{:nick "upgradingchatbot"
+                 :msg "Webchat is ALIVE!"}]}))
 
 (rf/reg-event-db
  ::new-chat-message
- (fn [db [_ msg]]
-   (let [chat-msgs (conj (:chat-msgs db) msg)]
-     (log (str "new-chat-message event: " msg))
+ (fn [db [_ payload]]
+   (let [chat-msgs (conj (:chat-msgs db) payload)]
+     (log (str "new-chat-message event: " payload))
      (assoc-in db [:chat-msgs] chat-msgs))))
 
 (rf/reg-sub
@@ -44,7 +45,7 @@
     (cond
       (= animation-key :chat)
       (let []
-        (rf/dispatch [::new-chat-message (:msg msg)]))
+        (rf/dispatch [::new-chat-message (:payload msg)]))
 
       :else
       (log (str "[chat] Need to implement animation-key: "
@@ -55,12 +56,26 @@
     (fn []
       [:div {:class :page}
        [:div {:class :chat}
-        (map
-         (fn [msg]
-           ^{:key (gensym "key-")}[:div {:class "chat__msg"} msg])
-         @chat-msgs
-         )]
-       [:div {:class :footer} "This is my footer"]
+        [:div {:class :chat__gutter}]
+        [:div {:class :chat__message-list}
+         (map
+          (fn [payload]
+            (let [msg (:msg payload)
+                  nick (:nick payload)]
+              ^{:key (gensym "key-")}
+              [:div {:class "chat__msg"}
+               [:div {:class "chat__nick"} (str nick ": ")]
+               [:div {:class "chat_body"} msg]]))
+          @chat-msgs
+          )]
+        ]
+       [:div {:class :footer}
+        [:div {:class :footer__top}]
+        [:div {:class :footer__main}
+
+         [:p "Hi there! "]
+         
+         ]]
        ])))
 
 (defn run []
