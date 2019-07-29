@@ -10,7 +10,7 @@ html, body {
   grid-template-rows: 540px auto;
   grid-template-areas: ". chat" "footer footer";
 
-  border: 1px solid orange;
+  /* border: 1px solid orange; */
   height: 720px;
   
 }
@@ -25,6 +25,9 @@ html, body {
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: space-between;
+
+  overflow: scroll;
+
 }
 
 .chat__gutter {

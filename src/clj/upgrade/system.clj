@@ -88,4 +88,10 @@
 (defn -main [& args])
 
 
-
+(comment
+  (def client (:client (:twitchbot @system)))
+  (def channel "#upgradingdave")
+  (require '[upgrade.twitchbot :refer [schedule-repeating-messages]])
+  (do
+)
+)

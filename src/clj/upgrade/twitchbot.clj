@@ -29,7 +29,10 @@
            [org.kitteh.irc.client.library.feature.twitch TwitchSupport]
            ))
 
+;; TODO: move into a single atom that stores all the internal state of this
+;; chatbot
 (defonce ws-clients (atom #{}))
+(defonce twitchbot-state (atom {}))
 
 (def chatbot-command-list ["play" "stop" "help"
                            "so" "today" "welcome" "github"])
@@ -39,7 +42,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm trying to build a web view of the twitch chat to display on stream")))
+  (str (str "Today I'm working on a webpage that I can use to display messages during the stream via a OBS overlay. I'll be fumbling thru using css to make round cornered frames.")))
 
 (defn chatbot-help-message []
   (str
@@ -326,9 +329,19 @@
           (if @continue-repeating-messages?
             (do
               (doseq [m messages] (send-message client channel m))
+              (doseq [ch @ws-clients
+                      m messages]
+                (send! ch (transitWrite {:animation-key :banner-message
+                                         :payload {:msg m}})))
+              
               (recur (async/timeout millis)))))))
-    (fn []
-      (reset! continue-repeating-messages? false))))
+
+    (swap! twitchbot-state update-in [:stop-fns]
+           (fn [cur]
+             (let [stop-fn (fn []
+                             (reset! continue-repeating-messages? false))
+                   existing (:stop-fns cur)]
+               (conj existing stop-fn ))))))
 
 (defn create-chatbot!
   "Creates an chatbot client object that can be used later to connect
@@ -387,20 +400,24 @@
     ;;900000 ;; every 15 minutes
     ;;1200000 ;; every 20 minutes
     ;;2100000 ;; every 35 minutes
-    (schedule-repeating-messages client channel [(welcome-message)] 1200000)
 
-    (schedule-repeating-messages client channel [(today-message)] 900000)
+    (schedule-repeating-messages client channel
+                                 [(welcome-message)] 1200000)
 
-    (schedule-repeating-messages client channel [(github-message)] 21000000)
+    (schedule-repeating-messages client channel
+                                 [(today-message)] 900000)
+
+    (schedule-repeating-messages client channel
+                                 [(github-message)] 21000000)
 
     twitchbot))
 
 (defn stop-twitchbot! [{:keys [twitchbot] :as system}]
-  (let [{:keys [client channel]} twitchbot]
+  (let [{:keys [client channel]} twitchbot
+        stop-functions (:stop-fns @twitchbot-state)]
     (log "Attempting to stop twitch chat bot ...")
     (log client)
     (log channel)
-    ;;(leave-and-disconnect client channel)
-    ;;twitchbot
-    ))
-
+    (leave-and-disconnect client channel)
+    (doseq [stop-fn stop-functions]
+      (stop-fn))))

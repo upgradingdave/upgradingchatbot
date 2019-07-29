@@ -46,11 +46,11 @@
    :public-ip (decrypt
                key-file-path
                ;; Bungalow
-               ;; (str "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKO"
-               ;;      "HrFT3TUJJgj4OsFWkTWA==")
+               (str "AAAADB5zClsw7Nev+SKwNyP6ijzPXHFDwFMP9lOtKO"
+                    "HrFT3TUJJgj4OsFWkTWA==")
                ;; Home
-               (str "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fk"
-                    "mkr80J1GrP7qnVSXZ4")
+               ;; (str "AAAADIu6PUorXmOZDmcRWZx5xS9SHLR9yH5ibBx1fk"
+               ;;      "mkr80J1GrP7qnVSXZ4")
                )
    :port 8081})
 

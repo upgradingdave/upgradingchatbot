@@ -12,4 +12,5 @@ resources/public/js/twitch.js
 resources/public/js/emoticons.js
 resources/public/js/followers.js
 resources/public/js/chat.js
+resources/public/js/banner.js
 target/

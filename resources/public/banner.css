@@ -1,0 +1,68 @@
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+.page {
+
+  display: grid;
+  grid-template-columns: 960px auto;
+  grid-template-rows: 540px auto;
+  grid-template-areas: "spacer spacer" "banner camera";
+
+  /* border: 1px solid orange; */
+  height: 720px;
+  
+}
+
+/* https://ethanschoonover.com/solarized/ */
+
+.spacer {
+  grid-column-start: 1;
+  grid-area: spacer;
+
+  /* border: 5px solid blue; */
+}
+
+.banner {
+
+  grid-column-start: 1;
+  grid-area: banner;
+
+  padding: 20px;
+  background-color: #002b36;
+
+  font-family: Menlo;
+  font-size: 30px;
+  color: #2aa198;
+}
+
+.camera {
+
+  grid-area: "camera";
+  border: 1px solid green;
+  
+}
+
+
+/* #002b36 base03 background */
+/* #073642 base02 background highiight */
+/* #586e75 base01 comments/secondary content */
+/* #657b83 base00 gray    ?? */
+/* #839496 base0  body text */
+/* #93a1a1 base1  optional emphasized content */
+/* #eee8d5 base2  white */
+/* #fdf6e3 base3  brwhite */
+/* #b58900 yellow  */
+/* #cb4b16 orange */
+/* #dc322f red  */
+/* #d33682 magenta */
+/* #6c71c4 violet */
+/* #268bd2 blue */
+/* #2aa198 cyan */
+/* #859900 green */
+
+
+
+
+

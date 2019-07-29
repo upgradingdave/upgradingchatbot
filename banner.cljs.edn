@@ -1,0 +1,4 @@
+{:main upgrade.banner
+ :output-to "resources/public/js/banner.js"
+ :output-dir "resources/public/js/out"
+ }

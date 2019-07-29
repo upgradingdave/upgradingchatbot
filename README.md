@@ -238,7 +238,8 @@ matter!), please come hang out and say hi.
 - Get better at Touch Typing https://zty.pe/
 - Which Software License should you use? https://choosealicense.com/
 
-# Functional concepts to learn
+# Software related concepts
 - https://stackoverflow.com/questions/8307370/functional-lenses
 - https://wiki.haskell.org/Rank-N_types
 - https://en.wikipedia.org/wiki/Church_encoding
+- https://htdp.org

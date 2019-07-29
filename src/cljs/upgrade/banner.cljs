@@ -1,4 +1,4 @@
-(ns ^:figwheel-hooks upgrade.chat
+(ns ^:figwheel-hooks upgrade.banner
   (:require [ajax.core :as ajax]
             ["react-transition-group/Transition" :as Transition]
             ["react-transition-group/TransitionGroup" :as
@@ -15,28 +15,22 @@
                                   make-websocket!
                                   json-reader]]))
 
-
-;; (js/window.scrollTo (js/document.body.scrollHeight)
-
 (rf/reg-event-db
  ::initialize
  (fn [_ _]
    (log (str "Initializing app-db"))
    {:init true
-    :chat-msgs (for [x (range 20)]
-                  {:nick "upgradingchatbot"
-                   :msg (str x " Webchat is ALIVE!")})}))
+    :msg "Ahoy There!"}))
 
 (rf/reg-event-db
- ::new-chat-message
+ ::new-message
  (fn [db [_ payload]]
-   (let [chat-msgs (conj (:chat-msgs db) payload)]
-     (log (str "new-chat-message event: " payload))
-     (assoc-in db [:chat-msgs] chat-msgs))))
+   (log (str "new-message event: " payload))
+   (assoc-in db [:msg] (:msg payload))))
 
 (rf/reg-sub
-  ::chat-msgs
-  (fn [db _] (get-in db [:chat-msgs] nil)))
+  ::msg
+  (fn [db _] (get-in db [:msg] nil)))
 
 (defn handle-ws-event [evt]
   "This is an event handler for websocket messages. It's registered as
@@ -44,36 +38,29 @@
   (log "Got a message!")
   (log evt)
   (let [msg (->> evt .-data (transit/read json-reader))
-        animation-key (:animation-key msg)]
+        message-type (:animation-key msg)]
 
     (cond
-      (= animation-key :chat)
+      (= message-type :banner-message)
       (let []
-        (rf/dispatch [::new-chat-message (:payload msg)]))
+        (rf/dispatch [::new-message (:payload msg)]))
 
       :else
-      (log (str "[chat] Need to implement animation-key: "
-                animation-key)))))
+      (log (str "[chat] Need to implement message-type: "
+                message-type)))))
 
 (defn view []
-  (let [chat-msgs (rf/subscribe [::chat-msgs])]
+  (let [msg (rf/subscribe [::msg])]
     (fn []
       [:div {:class :page}
-       [:div {:class :chat}
-        [:div {:class :chat__gutter}]
-        [:div {:class :chat__message-list}
-         (map
-          (fn [payload]
-            (let [msg (:msg payload)
-                  nick (:nick payload)]
-              ^{:key (gensym "key-")}
-              [:div {:class "chat__msg"}
-               [:div {:class "chat__nick"} (str nick ": ")]
-               [:div {:class "chat_body"} msg]]))
-          @chat-msgs
-          )]
-        ]
-       ])))
+       [:div {:class :spacer}]
+       [:div {:class :banner}
+
+        [:div {:class :banner__top}]
+        [:div {:class :banner__main}
+         [:p @msg]]]
+
+       [:div {:class :camera}]])))
 
 (defn run []
   (log "[chat] run")
