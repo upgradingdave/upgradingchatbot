@@ -15,34 +15,55 @@
                                   make-websocket!
                                   json-reader]]))
 
-
-;; (js/window.scrollTo (js/document.body.scrollHeight)
-
 (rf/reg-event-db
  ::initialize
  (fn [_ _]
    (log (str "Initializing app-db"))
    {:init true
-    :chat-msgs (for [x (range 20)]
-                  {:nick "upgradingchatbot"
-                   :msg (str x " Webchat is ALIVE!")})}))
+    :last-scroll-position 0
+    :scrolled-up false
+    :chat-msgs [{:nick "upgradingchatbot"
+                 :msg "Webchat is ALIVE!"}]
+
+    ;; uncomment to initialize chat with a bunch of messages (nice for
+    ;; testing auto scrolling)
+    
+    ;; (into [] 
+    ;;       (for [x (range 20)]
+    ;;         {:nick "upgradingchatbot"
+    ;;          :msg (str x " Webchat is ALIVE!")}))
+    }))
+
+(rf/reg-event-db
+ ::scroll-change
+ (fn [db [_ scroll-position]]
+   (log (str "Handle scroll change"))
+   (let [last-scroll-position (:last-scroll-position db)
+         scrolled-up (:scrolled-up db)
+         scroll-diff (- last-scroll-position scroll-position)
+         is-scrolling-up (> scroll-diff 0)]
+     (log is-scrolling-up)
+     (-> db
+         (assoc-in [:last-scroll-position] scroll-position)
+         (assoc-in [:scrolled-up] is-scrolling-up)))))
 
 (rf/reg-event-db
  ::new-chat-message
  (fn [db [_ payload]]
    (let [chat-msgs (conj (:chat-msgs db) payload)]
-     (log (str "new-chat-message event: " payload))
+     ;;(log (str "new-chat-message event: " payload))
      (assoc-in db [:chat-msgs] chat-msgs))))
 
 (rf/reg-sub
   ::chat-msgs
   (fn [db _] (get-in db [:chat-msgs] nil)))
 
-(defn handle-ws-event [evt]
+(defn handle-ws-event
   "This is an event handler for websocket messages. It's registered as
   WebSocket.onmessage"
-  (log "Got a message!")
-  (log evt)
+  [evt]
+  ;;(log "Got a message!")
+  ;;(log evt)
   (let [msg (->> evt .-data (transit/read json-reader))
         animation-key (:animation-key msg)]
 
@@ -55,30 +76,104 @@
       (log (str "[chat] Need to implement animation-key: "
                 animation-key)))))
 
+
+(defn auto-scroll?
+  "If a user just scrolled up, then we should pause automatic
+  scrolling. If user or something else just scrolled down, then we
+  need to figure out how far we are from the bottom. The
+  min-height-from-bottom adds some wiggle room. For example, if
+  min-height-from-bottom is 100, then auto scrolling will remain
+  enabled until the scrollbar is at least 100 above bottom."
+  [el last-scroll-position min-height-from-bottom]
+  (let [scroll-position (.-scrollTop el)
+        scroll-diff (- last-scroll-position scroll-position)
+        is-scrolling-up (> scroll-diff 0)
+        scroll-height (.-scrollHeight el)
+        height-diff (- scroll-height scroll-position)
+        client-height (.-clientHeight el)
+        height-from-bottom (- height-diff client-height)]
+
+    ;; (log (str "----- LET'S SCROLL -----"))
+    ;; (log (str "last-scroll-position: " last-scroll-position))
+    ;; (log (str "is-scrolling-up: " is-scrolling-up))
+    ;; (log (str "scroll-diff: " scroll-diff))
+    ;; (log (str "scroll-height: " scroll-height))    
+    ;; (log (str "client height: " client-height))
+    ;; (log (str "height diff: " height-diff))
+    ;; (log (str "height-from-bottom: " height-from-bottom))
+        
+    (< height-from-bottom min-height-from-bottom)))
+
+(defn scroll-to-bottom
+  "If element el is scrollable, this will force the scrollbar to the
+  bottom"
+  [el]
+  (.scrollTo el 0 (.-scrollHeight el)))
+
+(defn chat-view
+  ""
+  [] ;; remember to repeat any params here in render below
+  (let [chat-msgs (rf/subscribe [::chat-msgs])
+        chat-el (atom nil)
+        last-scroll-position (atom 0)
+        is-auto-scroll-enabled (atom true)]
+    (reagent/create-class
+     {:display-name  "upgradingchatbot-chat-view"
+
+      :component-did-mount
+      (fn [this] 
+        (log "component-did-mount")
+        (scroll-to-bottom @chat-el))
+         
+      :component-did-update
+      (fn [this old-argv]
+        (log "component-did-update")
+        (when @is-auto-scroll-enabled
+          (scroll-to-bottom @chat-el)))
+      
+      :reagent-render
+      (fn [] ;; remember to repeat params from above (if any)
+
+        [:div {:class :chat}
+         [:div {:class :chat__gutter}]
+         [:div {:class :chat__message-list
+                :ref (fn [el] (reset! chat-el el))
+                :on-scroll
+                (fn [e]
+                  (let [should-auto-scroll (auto-scroll? @chat-el
+                                                         @last-scroll-position
+                                                         40)
+                        new-scroll-position (.-scrollTop @chat-el)]
+
+                    (reset! last-scroll-position new-scroll-position)
+                    (reset! is-auto-scroll-enabled should-auto-scroll)
+
+                    ;; (log (str "should we scroll? " should-auto-scroll))
+
+                    ))}
+          (map
+           (fn [payload]
+             (let [msg (:msg payload)
+                   nick (:nick payload)]
+               ^{:key (gensym "key-")}
+               [:div {:class "chat__msg"}
+                [:div {:class "chat__nick"} (str nick ": ")]
+                [:div {:class "chat_body"} msg]]))
+           @chat-msgs
+           )]])
+      })))
+
 (defn view []
   (let [chat-msgs (rf/subscribe [::chat-msgs])]
     (fn []
       [:div {:class :page}
-       [:div {:class :chat}
-        [:div {:class :chat__gutter}]
-        [:div {:class :chat__message-list}
-         (map
-          (fn [payload]
-            (let [msg (:msg payload)
-                  nick (:nick payload)]
-              ^{:key (gensym "key-")}
-              [:div {:class "chat__msg"}
-               [:div {:class "chat__nick"} (str nick ": ")]
-               [:div {:class "chat_body"} msg]]))
-          @chat-msgs
-          )]
-        ]
-       ])))
+       [chat-view]])))
 
 (defn run []
   (log "[chat] run")
   ;; connect to websocket
   (make-websocket! handle-ws-event)
+
   ;; setup initial state
   (rf/dispatch-sync [::initialize])
   (reagent/render [view]
@@ -87,7 +182,8 @@
 (defonce start-up (do (run) true))
 
 (defn ^:after-load restart []
-  ;;(log "[FIGWHEEL] restart")
-  (run))
+  (log "[FIGWHEEL] restart")
+  ;;(run)
+  )
 
 

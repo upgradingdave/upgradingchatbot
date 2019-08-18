@@ -42,7 +42,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm working on a webpage that I can use to display messages during the stream via a OBS overlay. I'll be fumbling thru using css to make round cornered frames.")))
+  (str (str "Today I'm working a custom version of irc chat that can be used during the stream via a OBS overlay. I'll be fumbling thru using css and javascript to make it scroll. I hope I finish it today becuase I'm ready to switch to something else!")))
 
 (defn chatbot-help-message []
   (str

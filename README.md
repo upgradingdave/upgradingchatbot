@@ -90,6 +90,10 @@ If you're running this code locally, you can see the webpage here:
 
 http://localhost:8081/chat.html
 
+The chat will automatically scroll to the bottom unless you scroll up
+by a certainamount of pixels (I learned a lot when writing this and it
+took me a while to get this to work correctly!)
+
 ## Commands
 
 Commands are always changing and improving. Use !help for a list of
@@ -196,8 +200,14 @@ matter!), please come hang out and say hi.
 
 ## History
 
-- July 2019 :: Finishing the web version of chat. Might also reach 50
-  followers ... fingers crossed!
+- Aug 2019 :: The web chat overlay is finally working the way I
+  want. Auto scrolling was a bit more challenging than I expected, but
+  it's working nicely. I still want to style the web chat to be more
+  nautical, but pretty happy ... I'll continue to add styles and
+  overlays for the rest of this month.
+
+- July 2019 :: Worked more on the web version of chat, I didn't have
+  much time to stream in July because of work and vacation.
 
 - June 2019 :: The goals for this month is to have animation play when
   new followers follow me and/or new subscribers subscribe. I'd also

@@ -1,5 +1,7 @@
 # TODO
 
+## Misc
+
 - write a helper for reading config from file. add helpers for
   automatically decrypting
 - implement command line parsing for main 
@@ -25,7 +27,6 @@
 
 - !today - Tweak the scheduled messages. I'd like several different
   messages to be broadcasted every few minutes.
-- !play - able to play any mp3 link? (how to filter though?)
 - move the simple message type commands out to a config file
 - !help - add help for all other commands (we already did !play)
 - !help - also allow for this syntax: !help !play as well as !help play
@@ -47,6 +48,12 @@
   issues, but I'd rather write my own in clojure ;-)
 
 # Complete
+
+## 2019-07
+
+- continued working on webchat overlay and auto scrolling chat
+- implemented ability to use !play to play any mp3 link
+- fixed so that stop-twitchbot! works again
 
 ## 2019-06-12, 2019-06-14, 2019-06-17 (on stream)
 
