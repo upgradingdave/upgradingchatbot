@@ -11,7 +11,7 @@
                                        search-and-play-file!
                                        play-mp3-from-url!]]
              [upgrade.twitch :refer [getEmoteChangeSet!
-                                    emoteSetRegexStr
+                                     emoteSetRegexStr
                                      findEmoteImageUrl]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [net.engio.mbassy.listener Handler]
@@ -22,7 +22,8 @@
             ChannelJoinEvent
             ChannelPartEvent]
            [org.kitteh.irc.client.library.event.connection
-            ClientConnectionFailedEvent]
+            ClientConnectionFailedEvent
+            ClientConnectionEstablishedEvent]
            [org.kitteh.irc.client.library.event.client
             ClientReceiveCommandEvent
             ClientReceiveNumericEvent]
@@ -42,7 +43,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'm working a custom version of irc chat that can be used during the stream via a OBS overlay. I'll be fumbling thru using css and javascript to make it scroll. I hope I finish it today becuase I'm ready to switch to something else!")))
+  (str (str "Today I'm finishing up getting auto scrolling to work on my custom web version of irc chat. I might start working on updating the ability to schedule chat bot stuff.")))
 
 (defn chatbot-help-message []
   (str
@@ -282,6 +283,14 @@
       (let []
         (log (str "Got Disconnected??!!"))
         (log (str evt)))
+
+      ;; TODO I was thinking this might be useful to reconnect after
+      ;; network error, but now I don't think we really need to do
+      ;; anything for these types of events
+      
+      ;; (instance? ClientConnectionEstablishedEvent)
+      ;; (let []
+      ;;   )
       
       :else
       (log (str "NEED IMPLEMENTATION FOR: " event-type))
@@ -355,18 +364,9 @@
                    (then)
                    (nick username)
                    (build))]
-    ;; Not sure how to handle exceptions
-    ;;(.getExceptionListener client)
+
+    ;; Add Twitch support
     (TwitchSupport/addSupport client)))
-
-
-;; Here we are implementing the Thread.UncaughtExceptionHandler just
-;; in case the underlying thread created by the KICL irc library throw
-;; any exceptions we can handle them
-
-(def h (reify Thread$UncaughtExceptionHandler    
-         (uncaughtException [this t e] 
-           (log (str t ": " e)))))
 
 (defn connect-and-add-channel!
   "Connect and start listening to channels"
@@ -384,7 +384,7 @@
   (let [{:keys [host port username oauth channel]} twitchbot
         {:keys [clientid]} twitchapi
         client (create-chatbot! host port username oauth)
-        ;; oauth is no longer needed, so let's get rid of it
+        ;; oauth is no longer needed in memory, so let's clear it
         twitchbot (assoc twitchbot
                          :oauth nil
                          :client (connect-and-add-channel! client channel

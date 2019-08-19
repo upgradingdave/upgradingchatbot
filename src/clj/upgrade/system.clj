@@ -58,11 +58,25 @@
          ;; else
          current)))))
 
+;; TODO change to defonce when this works
+(def exception-consumer
+  (reify java.util.function.Consumer
+    (accept [this t]
+      (log "I CAUGHT AN EXCEPTION FROM SYSTEM")
+      (let [^Exception e t]
+        (log e)))))
+
 (defn start-twitchbot!
   "Start a twitchbot and update httpkit's dependency on twitchbot"
   []
   (let [{:keys [twitchbot]}
-        (start-component! :twitchbot bot/start-twitchbot!)]
+        (start-component! :twitchbot bot/start-twitchbot!)
+     
+        client (:client twitchbot)
+        exception-listener (.getExceptionListener client)]
+
+    ;; after starting twitchbot, register a exception listener
+    (.setConsumer exception-listener exception-consumer)
     (swap! system assoc-in [:httpkit :twitchbot] twitchbot)))
 
 (defn stop-twitchbot! []

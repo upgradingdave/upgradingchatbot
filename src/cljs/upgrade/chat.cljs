@@ -58,6 +58,9 @@
   ::chat-msgs
   (fn [db _] (get-in db [:chat-msgs] nil)))
 
+
+;; TODO think about how to make this generic and how to have multiple
+;; components hook into this
 (defn handle-ws-event
   "This is an event handler for websocket messages. It's registered as
   WebSocket.onmessage"
@@ -171,6 +174,7 @@
 
 (defn run []
   (log "[chat] run")
+
   ;; connect to websocket
   (make-websocket! handle-ws-event)
 
@@ -179,7 +183,7 @@
   (reagent/render [view]
                   (js/document.getElementById "app")))
 
-(defonce start-up (do (run) true))
+;;(defonce start-up (do (run) true))
 
 (defn ^:after-load restart []
   (log "[FIGWHEEL] restart")

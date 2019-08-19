@@ -24,13 +24,16 @@
 - able to display multiple emotes at same time
 
 ## Chatbot
-
+- catch exceptions when chatbot client loses connection I worked on
+  this and was able to use `client.getExceptionListener`. Now I can
+  detect when the irc client loses connection. The next step is to
+  figure out the best way to reconnect (I think I should call
+  `connect` on client?
 - !today - Tweak the scheduled messages. I'd like several different
   messages to be broadcasted every few minutes.
 - move the simple message type commands out to a config file
 - !help - add help for all other commands (we already did !play)
 - !help - also allow for this syntax: !help !play as well as !help play
-- catch exceptions when chatbot client loses connection
 - Setup unit tests?
 - !play - By default, limit play search results to 30 seconds or less
 - !play - make the download from freesound asynchronous. 

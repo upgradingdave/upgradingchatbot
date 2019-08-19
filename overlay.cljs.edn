@@ -1,0 +1,4 @@
+{:main upgrade.overlay
+ :output-to "resources/public/js/overlay.js"
+ :output-dir "resources/public/js/out"
+ }

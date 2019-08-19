@@ -1,3 +1,4 @@
+;; TODO: rename this to twitch-extension or something like that
 {:main upgrade.app
  :output-to "resources/public/js/twitch.js"
  :output-dir "resources/public/js/out"
