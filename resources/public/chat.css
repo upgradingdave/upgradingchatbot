@@ -4,60 +4,80 @@ html, body {
 }
 
 .page {
-
   margin: 0;
   /* border: 1px solid orange; */
   /* height: 720px; */
-  
 }
 
 /* https://ethanschoonover.com/solarized/ */
 
+.chat-wrapper {
+  position: relative;
+}
+
+.chat-wrapper__octo {
+  display: block;
+  position: absolute;
+  /* bottom: 0; */
+  /* left: -10px; */
+  /* opacity: 0.2; */
+}
+
 .chat {
+
   /* border: 3px solid red; */
 
-  position: absolute;
-  height: 100%;
-  width: 300px;
+  display: flex;
+  height: 720px;
+  width: 200px;
 }
 
 .chat__gutter {
+
   /* border: 1px solid green; */
 
-  float: left;
-  height: 100%;
-  width: 20px;
-
+  /* height: 100%; */
+  width: 5%;
   background-color: #073642;
+
 }
 
 .chat__message-list {
+
   /* border: 3px solid orange; */
 
-  float: left;
-  height: 100%;
-  width: 275px;
-
-  padding: 0 0 0 5px;
+  width: 95%;
+  padding: 5px 0;
   background-color: #002b36;
 
-  overflow-y: scroll;
-}
+  display: flex;
+  flex-direction: column;
 
-.chat__nick {
-  font-size: 14px;
-  font-family: Menlo;
-  /* blue */
-  color: #268bd2
+  flex-grow: 1;
+  overflow-y: auto;
+
 }
 
 .chat__msg {
+
+  /* height: 100%; */
+  width: 100%;
+  
   font-size: 14px;
   font-family: Menlo;
   /* base0 */
   color: #839496;
   padding-bottom: 10px;
 }
+
+.chat__msg__nick {
+  font-size: 14px;
+  font-family: Menlo;
+  /* blue */
+  color: #268bd2;
+}
+
+
 
 
 /* #002b36 base03 background */

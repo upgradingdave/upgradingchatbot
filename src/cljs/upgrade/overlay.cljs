@@ -16,6 +16,9 @@
                                   make-websocket!
                                   json-reader]]))
 
+;; this is a ugly trick to be able to force a re-render of components
+(def force-render (reagent/atom 0))
+
 (rf/reg-event-db
  ::initialize
  (fn [_ _]
@@ -54,6 +57,7 @@
 (defn view []
   (let []
     (fn []
+      @force-render
       [:div {:class :page}
        [overlay-view]])))
 
@@ -68,13 +72,12 @@
   (reagent/render [view]
                   (js/document.getElementById "app")))
 
-;; TODO: how to switch between testing different namespaces without
-;; having to comment / uncomment this line??
-(defonce start-up (do (run) true))
+(defn ^:export start-up []
+  (do (run) true))
 
 (defn ^:after-load restart []
   (log "[FIGWHEEL] restart")
-  ;;(run)
+  (swap! force-render inc)
   )
 
 

@@ -236,6 +236,15 @@ matter!), please come hang out and say hi.
 9. Start stream with "Starting Soon" OBS Scene
 10. Setup chat view, and windows, Setup Desktop OBS Scene
 
+## Screen sizes Notes
+
+- OBS Window size: 1280 x 720
+- Create a 1280 x 720 Viewport Preset named "Twitch" using the Windows
+  Resizer Chrome Browser Plugin
+- Configure a OBS Display Capture Source named "Macbook Screen",
+  select Crop to Window and Manual, set Crop Top to 155px (to hide
+  window frame address bar)
+
 ## Royalty Free Music
 
 - https://incompetech.com/music/royalty-free/music.html (need to give credit)

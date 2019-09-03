@@ -22,8 +22,11 @@
    {:init true
     :last-scroll-position 0
     :scrolled-up false
-    :chat-msgs [{:nick "upgradingchatbot"
-                 :msg "Webchat is ALIVE!"}]
+    :chat-msgs
+
+    ;; default initial message
+    [{:nick "upgradingchatbot"
+      :msg "Webchat is ALIVE!"}]
 
     ;; uncomment to initialize chat with a bunch of messages (nice for
     ;; testing auto scrolling)
@@ -113,13 +116,35 @@
   [el]
   (.scrollTo el 0 (.-scrollHeight el)))
 
+(defn children-height
+  "Calculate total height of an elements children"
+  [el]
+  (let [children (array-seq (.-children el))
+        total (reduce + (map #(.-clientHeight %) children))]
+    total))
+
+(defn overflowing?
+  "Determine if an element's children are overflowing outside of the element"
+  [el]
+  (let [cheight (children-height el)
+        myheight (.-clientHeight el)]
+    (> cheight myheight)))
+
+(defn sea-creature-img [image-file-name custom-style]
+  [:img {:class :chat-wrapper__octo
+         :src (str "/img/" image-file-name)
+         :style (merge {:width "200px"
+                        :opacity "0.2"}
+                       custom-style)}])
+
 (defn chat-view
   ""
   [] ;; remember to repeat any params here in render below
   (let [chat-msgs (rf/subscribe [::chat-msgs])
         chat-el (atom nil)
         last-scroll-position (atom 0)
-        is-auto-scroll-enabled (atom true)]
+        is-auto-scroll-enabled (atom true)
+        overflowing (atom false)]
     (reagent/create-class
      {:display-name  "upgradingchatbot-chat-view"
 
@@ -131,39 +156,49 @@
       :component-did-update
       (fn [this old-argv]
         (log "component-did-update")
+        (reset! overflowing (overflowing? @chat-el))
         (when @is-auto-scroll-enabled
           (scroll-to-bottom @chat-el)))
       
       :reagent-render
       (fn [] ;; remember to repeat params from above (if any)
+        [:div {:class :chat-wrapper}
+         [:div {:class :chat}
+          [:div {:class :chat__gutter}]
+          [:div {:class :chat__message-list
+                 :style (when (not @overflowing) {:justify-content :flex-end})
+                 :ref (fn [el] (reset! chat-el el))
+                 :on-scroll
+                 (fn [e]
+                   (let [should-auto-scroll (auto-scroll? @chat-el
+                                                          @last-scroll-position
+                                                          40)
+                         new-scroll-position (.-scrollTop @chat-el)]
 
-        [:div {:class :chat}
-         [:div {:class :chat__gutter}]
-         [:div {:class :chat__message-list
-                :ref (fn [el] (reset! chat-el el))
-                :on-scroll
-                (fn [e]
-                  (let [should-auto-scroll (auto-scroll? @chat-el
-                                                         @last-scroll-position
-                                                         40)
-                        new-scroll-position (.-scrollTop @chat-el)]
+                     (reset! last-scroll-position new-scroll-position)
+                     (reset! is-auto-scroll-enabled should-auto-scroll)
 
-                    (reset! last-scroll-position new-scroll-position)
-                    (reset! is-auto-scroll-enabled should-auto-scroll)
+                     ;; (log (str "should we scroll? " should-auto-scroll))
 
-                    ;; (log (str "should we scroll? " should-auto-scroll))
-
-                    ))}
-          (map
-           (fn [payload]
-             (let [msg (:msg payload)
-                   nick (:nick payload)]
-               ^{:key (gensym "key-")}
-               [:div {:class "chat__msg"}
-                [:div {:class "chat__nick"} (str nick ": ")]
-                [:div {:class "chat_body"} msg]]))
-           @chat-msgs
-           )]])
+                     ))}
+           (map
+            (fn [payload]
+              (let [msg (:msg payload)
+                    nick (:nick payload)]
+                ^{:key (gensym "key-")}
+                [:div {:class "chat__msg"}
+                 [:div {:class "chat__msg__nick"} (str nick ": ")]
+                 [:div {:class "chat__msg__body"} msg]]))
+            @chat-msgs
+            )]]
+         [sea-creature-img "octopus4.png" {:top :160px
+                                           :transform "rotate(330deg)"}]
+         [sea-creature-img "polypus.png" {:top :300px
+                                          :opacity "0.5"
+                                          :transform "rotate(-40deg)"}]
+         [sea-creature-img "octopus6.png" {:top :545px
+                                           :opacity "0.3"
+                                           :transform "rotate(120deg)"}]])
       })))
 
 (defn view []
@@ -183,11 +218,10 @@
   (reagent/render [view]
                   (js/document.getElementById "app")))
 
-;;(defonce start-up (do (run) true))
+(defn ^:export start-up []
+  (do (run) true))
 
 (defn ^:after-load restart []
   (log "[FIGWHEEL] restart")
   ;;(run)
   )
-
-

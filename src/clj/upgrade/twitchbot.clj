@@ -10,6 +10,13 @@
                                        play-not-found!
                                        search-and-play-file!
                                        play-mp3-from-url!]]
+             [upgrade.messages :refer [chatbot-help-message
+                                       github-message
+                                       play-reply
+                                       play-help-message
+                                       shout-out-message
+                                       today-message
+                                       welcome-message]]
              [upgrade.twitch :refer [getEmoteChangeSet!
                                      emoteSetRegexStr
                                      findEmoteImageUrl]])
@@ -38,38 +45,6 @@
 (def chatbot-command-list ["play" "stop" "help"
                            "so" "today" "welcome" "github"])
 
-(defn github-message []
-  (str "Checkout my github repository for the source code for the "
-       "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
-
-(defn today-message []
-  (str (str "Today I'm finishing up getting auto scrolling to work on my custom web version of irc chat. I might start working on updating the ability to schedule chat bot stuff.")))
-
-(defn chatbot-help-message []
-  (str
-   "B) The UpgradingChatBot is online and here to help! "
-   "Have fun! Here are the commands: "
-   (apply str (interpose ", " (map (fn [command] (str "!" command))
-                                   chatbot-command-list)))
-   ". Try `!help <command>` for more details on each command."))
-
-(defn welcome-message
-  ([]
-   (str
-    "HeyGuys "
-    "Welcome! "
-    "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
-    "My goal is become a better programmer by exploring my favorite programming "
-    "language Clojure, and meet other programmers. "
-    "If you're interested in clojure here's a great site to get started: "
-    "https://www.braveclojure.com/"))
-  ([username]
-   (str
-    "HeyGuys "
-    "Welcome, " username "! Great to have you here, grab a frosty beverage and "
-    "help us write some clojure. If you have suggestions or questions, please don't "
-    "be shy. Type !help in the chat for a list of commands and please try them out!")))
-
 (defn command-parser []
   (str "cmd = "
        (apply str (interpose " | " chatbot-command-list )) "\n"
@@ -96,9 +71,6 @@
        "username= #\"[^\\s]+\"\n"
        "space= #\"\\s+\"\n"
        ))
-
-(defn play-reply [url]
-  (str "SingsNote SingsNote SingsNote " url))
 
 (defn handle-channel-command [evt]
   (let [msg (. evt getMessage)
@@ -130,9 +102,9 @@
           (= command :help)
           (cond
             (= args "play")
-            (.sendReply evt (str "You can play mp3 sounds from the chat! For example, give this a shot: `!play sipping coffee`. The !play command will search https://freesound.org and will play the first result of the search. In order to play the second search result, for example, you can pass a search index like this: `!play 1 sipping coffee`."))
+            (.sendReply evt (play-help-message))
             :else
-            (.sendReply evt (chatbot-help-message))
+            (.sendReply evt (chatbot-help-message chatbot-command-list))
 
             )
           
@@ -140,9 +112,7 @@
           (if-let [[_ username] args]
             (do
               (println "Shout Out to " username)
-              (.sendReply evt (str "Shout out to https://www.twitch.tv/"
-                                   username
-                                   " Go and check out their stream!"))))
+              (.sendReply evt (shout-out-message))))
 
           (= command :today)
           (.sendReply evt (today-message))
