@@ -13,11 +13,13 @@ html, body {
 /* } */
 
 .follower {
+  /* border: 1px solid red; */
+  position: relative;
   margin: 0 auto;
   width: 600px;
-  font-size: 96px;
+  font-size: 76px;
   font-family: 'Ruthie', cursive;
-  color: white;
+  color: red;
   text-align: center;
 }
 
@@ -28,8 +30,6 @@ html, body {
 .follower img{
   display: block;
   margin: auto;
-}
-.follower__name {
 }
 
 .follower__animation--init {
@@ -60,5 +60,18 @@ html, body {
   transition: all 300ms ease-in;
 }
 
+.follower__msg {
+  /* border: 1px solid green; */
+  position: absolute;
+  text-align: center;
+  width: 100%;
+  
+}
 
-
+.follower__name {
+  /* border: 1px solid green; */
+  position: absolute;
+  top: 100px;
+  text-align: center;
+  width: 100%;
+}

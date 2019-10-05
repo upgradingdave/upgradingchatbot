@@ -72,7 +72,8 @@
 (defn play-follower-animation [client channel from_name]
 
   ;; Really annoying festival music! (play-sound! 468218)
-  (search-and-play-file! "drunkensailor")
+  ;; Decided not to play any song
+  (search-and-play-file! "swanpirates")
   
   (doseq [ch @ws-clients]
     (send! ch (transitWrite {:animation-key :followers

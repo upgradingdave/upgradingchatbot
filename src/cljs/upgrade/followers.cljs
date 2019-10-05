@@ -101,7 +101,7 @@
         [:div {:class (if @running? "" "follower__animation--init")}
          [:p {:class :follower__msg} "Welcome to the crew, "]
          [:img {:src "/img/dancing_sailors.gif"}]
-         [:p {:class "follower__name"} @follower "!"]]]
+         [:p {:class :follower__name} @follower "!"]]]
 
        ])))
 

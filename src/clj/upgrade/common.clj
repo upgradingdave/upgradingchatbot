@@ -1,5 +1,7 @@
 (ns upgrade.common
   (:require [bidi.bidi :refer [match-route path-for]]
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [cognitect.transit :as transit])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
            [upgrade.encrypt EncryptionManager]))
@@ -32,7 +34,14 @@
         "hub/follows" :follower
         }])
 
-;; TODO: eventually move all of this to conf file?
+;; TODO If/When we make this a uberjar and/or command line program,
+;; path-to-file can be a cli argument. 
+(defonce path-to-conf-file "config.edn")
+
+;; TODO as of now, this just reads config for the scheduled messages
+(defn read-config-from-file [path-to-file]
+  (with-open [r (java.io.PushbackReader. (io/reader path-to-file))]
+    (edn/read r)))
 
 (def key-file-path "./mykeyfile")
 (def log-file-path "./twitchbot.log")

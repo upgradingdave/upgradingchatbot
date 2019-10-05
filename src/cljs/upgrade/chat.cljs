@@ -191,14 +191,19 @@
                  [:div {:class "chat__msg__body"} msg]]))
             @chat-msgs
             )]]
-         [sea-creature-img "octopus4.png" {:top :160px
-                                           :transform "rotate(330deg)"}]
-         [sea-creature-img "polypus.png" {:top :300px
-                                          :opacity "0.5"
-                                          :transform "rotate(-40deg)"}]
-         [sea-creature-img "octopus6.png" {:top :545px
-                                           :opacity "0.3"
-                                           :transform "rotate(120deg)"}]])
+
+         ;; I didn't really like how this turned out and it screwed up
+         ;; the scrolling
+
+         ;; [sea-creature-img "octopus4.png" {:top :160px
+         ;;                                   :transform "rotate(330deg)"}]
+         ;; [sea-creature-img "polypus.png" {:top :300px
+         ;;                                  :opacity "0.5"
+         ;;                                  :transform "rotate(-40deg)"}]
+         ;; [sea-creature-img "octopus6.png" {:top :545px
+         ;;                                   :opacity "0.3"
+         ;;                                   :transform "rotate(120deg)"}]
+         ])
       })))
 
 (defn view []

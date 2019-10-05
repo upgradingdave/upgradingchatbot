@@ -5,7 +5,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str (str "Today I'll hopefully finish converting to use the `at-at` scheduling library.")))
+  (str "Getting back into twitch today"))
 
 (defn chatbot-help-message [chatbot-command-list]
   (str

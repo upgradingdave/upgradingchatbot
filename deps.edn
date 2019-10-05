@@ -19,6 +19,7 @@
   hiccup {:mvn/version "1.0.5"}
   org.clojure/core.async {:mvn/version "0.4.490"}  
   org.kitteh.irc/client-lib {:mvn/version "7.1.0"}
+  overtone/at-at {:mvn/version "1.2.0"}
   ring/ring-core  {:mvn/version "1.6.3"}
   ring/ring-json {:mvn/version "0.4.0"}
   ring/ring-mock {:mvn/version "0.4.0"}

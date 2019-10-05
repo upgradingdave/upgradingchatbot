@@ -371,6 +371,11 @@
     ;;1200000 ;; every 20 minutes
     ;;2100000 ;; every 35 minutes
 
+    ;; TODO move this into system and pass it into this startup function
+    ;;(def config (c/read-config-from-file "config.edn"))
+    ;;(def smsgs (resolve-scheduled-messages (:scheduled-messages config) (:messages config)))
+    ;; (def result (schedule-repeating-message client channel smsgs))
+
     (schedule-repeating-messages client channel
                                  [(welcome-message)] 1200000)
 

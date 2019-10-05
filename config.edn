@@ -1,0 +1,21 @@
+{
+ ;; Messages
+ :messages
+ {0 {:id 0
+     :key :today
+     :message "Today I'll hopefully finish converting to use the `at-at` scheduling library."}
+
+  1 {:id 1
+     :key :github
+     :message "Checkout my github repository for the source code for the upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"}
+
+  2 {:id 2 :key :welcome :message
+     "HeyGuys Welcome! Since April 2019, I'm on a challenge to live stream 3 times a week for a year. My goal is become a better programmer by exploring my favorite programming language Clojure, and meet other programmers. If you're interested in clojure here's a great site to get started: https://www.braveclojure.com/"}}
+ 
+ ;; Scheduled Messages
+ :scheduled-messages
+ [{:message-id 0
+    :repeat-millis 900000
+    :delay-millis 0}]
+
+ }
