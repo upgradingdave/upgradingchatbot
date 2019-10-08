@@ -1,5 +1,3 @@
-
-
 {:paths
  ["src/clj" "src/cljs" "resources/public"]
 
@@ -27,7 +25,9 @@
  
  :aliases {
            :uberjar
-           {:extra-deps {uberdeps {:mvn/version "0.1.4"}}}
+           {:extra-deps {uberdeps {:mvn/version "0.1.4"}}
+            ;;:main-opts ["-m" "upgrade.system"]
+            }
            
            :repl
            {:extra-deps

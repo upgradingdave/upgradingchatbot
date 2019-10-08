@@ -5,7 +5,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str "Getting back into twitch today"))
+  (str "Starting to think about how I can build a text editor using electron and clojure"))
 
 (defn chatbot-help-message [chatbot-command-list]
   (str

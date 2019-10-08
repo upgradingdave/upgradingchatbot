@@ -99,8 +99,8 @@
   (stop-httpkit!))
 
 ;; TODO implement command line arg parsing
-(defn -main [& args])
-
+(defn -main [& args]
+  (start-system!))
 
 (comment
   (def client (:client (:twitchbot @system)))

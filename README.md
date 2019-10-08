@@ -3,6 +3,12 @@
 Welcome! This is a chatbot that I developed live on my Twitch Stream
 at https://www.twitch.tv/upgradingdave
 
+To start the chat bot: 
+
+```
+./scripts/uberjar.sh
+```
+
 # Getting started with clojure
 
 In case you're interested in getting started with clojure, please
