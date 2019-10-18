@@ -5,7 +5,7 @@
        "upgradingchatbot: https://github.com/upgradingdave/upgradingchatbot"))
 
 (defn today-message []
-  (str "Starting to think about how I can build a text editor using electron and clojure"))
+  (str "Today I'll be adding more basic functionality to my text editor. Currently, I can kinda, sorta enter \"lines\" of text. It'd be nice to be able to backspace and delete as well!"))
 
 (defn chatbot-help-message [chatbot-command-list]
   (str
@@ -20,17 +20,16 @@
    (str
     "HeyGuys "
     "Welcome! "
-    "Since April 2019, I'm on a challenge to live stream 3 times a week for a year. "
+    "Since April 2019, I'm on a challenge to program on stream every week for a year. "
     "My goal is become a better programmer by exploring my favorite programming "
-    "language Clojure, and meet other programmers. "
+    "language Clojure and meet other programmers. "
     "If you're interested in clojure here's a great site to get started: "
     "https://www.braveclojure.com/"))
   ([username]
    (str
     "HeyGuys "
-    "Welcome, " username "! Great to have you here, grab a frosty beverage and "
-    "help us write some clojure. If you have suggestions or questions, please don't "
-    "be shy. Type !help in the chat for a list of commands and please try them out!")))
+    "Welcome, " username "! Thanks for stopping by! Please feel free to say \"hi\" in the chat and let me know your favorite programming language and what you're working on"
+    "Type !help in the chat for a list of commands and please try them out!")))
 
 (defn play-reply [url]
   (str "SingsNote SingsNote SingsNote " url))

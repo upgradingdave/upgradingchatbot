@@ -236,7 +236,7 @@ matter!), please come hang out and say hi.
 4. Sound to 100% and then set sound to "Multi Output Device" (from
    iShowU Audio Capture)
 5. Set backgroud music volume so OBS shows -40 db. Keep OBS volume 100%
-6. Set Mic volume in OBS so recording around -20 db (just above green)
+6. Set Mic volume in OBS so recording around -10 db 
 7. Start chatbot
 8. Remove url from overlays and add them back
 9. Start stream with "Starting Soon" OBS Scene

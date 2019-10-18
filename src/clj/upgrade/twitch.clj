@@ -37,14 +37,19 @@
         result))))
 
 (defn getEmoteChangeSet!
-  "Makes a http GET request to the twitch v5 api to get code's and
-  id's of emotes inside a emote set. Returns a list of maps of :id and :code"
+  "Makes a http GET request to the twitch v5 api to get code's and id's
+  of emotes inside a emote set. Returns a list of maps of :id
+  and :code"
   [clientid emotesetid]
   (let [options (:timeout 200)
         url (str "https://api.twitch.tv/kraken" "/chat/emoticon_images"
                  "?emotesets=" emotesetid
-                 "&client_id=" clientid)
+                 ;; 20191017 for some reason, passing clientid stopped
+                 ;;working??
+                 ;; "&client_id=" clientid
+                 )
         {:keys [status headers body error]} @(http/get url)]
+    ;;(log url)
     (if error
       {:error error}
       ;; on success

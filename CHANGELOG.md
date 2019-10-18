@@ -24,6 +24,7 @@
 - able to display multiple emotes at same time
 
 ## Chatbot
+- update chat messages to use hyperlinks
 - catch exceptions when chatbot client loses connection I worked on
   this and was able to use `client.getExceptionListener`. Now I can
   detect when the irc client loses connection. The next step is to
